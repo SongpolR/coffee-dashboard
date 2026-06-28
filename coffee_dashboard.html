@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+<title>แดชบอร์ดยอดขายร้านกาแฟ</title>
+<style>html,body{margin:0;background:#17120E;}#root{max-width:1100px;margin:0 auto;}</style>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/recharts@2.12.7/umd/Recharts.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useMemo, useEffect, useRef, useCallback } = React;
+const { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Cell, PieChart, Pie, Tooltip, LabelList } = Recharts;
+
+
+// ── แถวดิบที่ฝังไว้ (ดึงจากไฟล์ coffee_data) ──
+const SEED_ROWS = [{"cus":"a1","p":"เอสเพรสโซ","t":"hot","k":"for here","pr":50,"q":1},{"cus":"a1","p":"คาปูชิโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a2","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a2","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a3","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a4","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a4","p":"อเมริกาโน่","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a5","p":"อเมริกาโน่","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a6","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a6","p":"อเมริกาโน่","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a6","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a7","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a7","p":"ลาเต้","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a8","p":"อเมริกาโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a8","p":"ลาเต้","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a9","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a10","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":50,"q":1},{"cus":"a10","p":"มอคค่า","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a11","p":"คาปูชิโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a11","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a12","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a12","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a12","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a13","p":"ลาเต้","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a13","p":"มอคค่า","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a14","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a14","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a14","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a15","p":"มอคค่า","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a15","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a16","p":"คาปูชิโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a17","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a18","p":"ลาเต้","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a18","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a19","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a19","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a20","p":"มอคค่า","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a20","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a21","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a21","p":"คาปูชิโน่","t":"hot","k":"for here","pr":50,"q":1},{"cus":"a22","p":"คาปูชิโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a23","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a24","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a25","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a26","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a27","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a27","p":"ลาเต้","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a28","p":"มอคค่า","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a28","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a29","p":"มอคค่า","t":"hot","k":"for here","pr":70,"q":1},{"cus":"a29","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":50,"q":1},{"cus":"a29","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a30","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a31","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a31","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a31","p":"มอคค่า","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a31","p":"คาปูชิโน่","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a32","p":"คาปูชิโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a33","p":"คาปูชิโน่","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a33","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a33","p":"มอคค่า","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a34","p":"มอคค่า","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a34","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a35","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a35","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a36","p":"คาปูชิโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a36","p":"มอคค่า","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a36","p":"ลาเต้","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a37","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a37","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a37","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a38","p":"อเมริกาโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a38","p":"ลาเต้","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a39","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a39","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a40","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a40","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a41","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a41","p":"ลาเต้","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a42","p":"มอคค่า","t":"hot","k":"for here","pr":50,"q":1},{"cus":"a42","p":"ลาเต้","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a43","p":"ลาเต้","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a43","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a44","p":"อเมริกาโน่","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a44","p":"ลาเต้","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a45","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a46","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a47","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a47","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a48","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a48","p":"คาปูชิโน่","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a49","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a50","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a50","p":"คาปูชิโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a51","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a51","p":"มอคค่า","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a51","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a52","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a52","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a53","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a53","p":"ลาเต้","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a54","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a54","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a55","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a55","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a56","p":"ลาเต้","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a56","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a57","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a58","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a58","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a59","p":"อเมริกาโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a59","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a60","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a60","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a60","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a61","p":"มอคค่า","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a61","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a62","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a62","p":"มอคค่า","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a63","p":"อเมริกาโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a63","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a64","p":"อเมริกาโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a65","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a65","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a65","p":"คาปูชิโน่","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a66","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a66","p":"ลาเต้","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a67","p":"มอคค่า","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a67","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a67","p":"ลาเต้","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a68","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a68","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a69","p":"มอคค่า","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a69","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a70","p":"คาปูชิโน่","t":"hot","k":"for here","pr":50,"q":1},{"cus":"a70","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a70","p":"อเมริกาโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a71","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a71","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a72","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a72","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a73","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a73","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a73","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a74","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a74","p":"ลาเต้","t":"hot","k":"for here","pr":70,"q":1},{"cus":"a74","p":"ลาเต้","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a75","p":"คาปูชิโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a75","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a76","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a76","p":"มอคค่า","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a76","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a77","p":"มอคค่า","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a77","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a78","p":"ลาเต้","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a78","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a79","p":"ลาเต้","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a79","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a79","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a80","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a80","p":"คาปูชิโน่","t":"hot","k":"for here","pr":70,"q":1},{"cus":"a80","p":"ลาเต้","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a80","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a81","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a81","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a81","p":"คาปูชิโน่","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a82","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a82","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a83","p":"อเมริกาโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a83","p":"คาปูชิโน่","t":"hot","k":"for here","pr":50,"q":1},{"cus":"a84","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a85","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a86","p":"อเมริกาโน่","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a87","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a87","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a88","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a88","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a89","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a89","p":"อเมริกาโน่","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a90","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a91","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a92","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a93","p":"มอคค่า","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a94","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a95","p":"คาปูชิโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a96","p":"เอสเพรสโซ","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a96","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":50,"q":1},{"cus":"a97","p":"ลาเต้","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a97","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a98","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a99","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a99","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a100","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a101","p":"มอคค่า","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a102","p":"มอคค่า","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a102","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a102","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a103","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a103","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a104","p":"คาปูชิโน่","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a104","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a105","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a105","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a105","p":"มอคค่า","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a106","p":"ลาเต้","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a106","p":"คาปูชิโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a107","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a107","p":"อเมริกาโน่","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a107","p":"มอคค่า","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a107","p":"ลาเต้","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a108","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a108","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a109","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a109","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a109","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a110","p":"อเมริกาโน่","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a111","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a112","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a113","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a113","p":"คาปูชิโน่","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a114","p":"มอคค่า","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a115","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a116","p":"มอคค่า","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a116","p":"ลาเต้","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a117","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a118","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a119","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a120","p":"ลาเต้","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a121","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a122","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a122","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a123","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a123","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a124","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a124","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a124","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a125","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a126","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a126","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a126","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a127","p":"คาปูชิโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a127","p":"อเมริกาโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a128","p":"อเมริกาโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a128","p":"อเมริกาโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a129","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a129","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a130","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a130","p":"มอคค่า","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a131","p":"คาปูชิโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a131","p":"อเมริกาโน่","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a132","p":"คาปูชิโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a133","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a133","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a133","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a134","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a134","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a135","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a136","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a137","p":"อเมริกาโน่","t":"ice","k":"for here","pr":50,"q":1},{"cus":"a138","p":"มอคค่า","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a138","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a139","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a139","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a140","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a140","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a141","p":"มอคค่า","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a141","p":"อเมริกาโน่","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a142","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a143","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a144","p":"อเมริกาโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a144","p":"ลาเต้","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a145","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a145","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a146","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a147","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a148","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a149","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a149","p":"ลาเต้","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a150","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a150","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a151","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a151","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a152","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a152","p":"คาปูชิโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a152","p":"อเมริกาโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a153","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a154","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a154","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a154","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a155","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a156","p":"อเมริกาโน่","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a156","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a157","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a158","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a158","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a158","p":"ลาเต้","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a159","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a159","p":"ลาเต้","t":"ice","k":"for here","pr":50,"q":1},{"cus":"a160","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a160","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a160","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a160","p":"คาปูชิโน่","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a161","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":50,"q":1},{"cus":"a161","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a162","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a162","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a162","p":"มอคค่า","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a163","p":"เอสเพรสโซ","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a163","p":"คาปูชิโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a164","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a164","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a165","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a166","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a167","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a168","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a169","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a169","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a170","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a170","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a170","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a171","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a169","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1}];
+
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSXdt9XJ0G4XIJBK_7fDkBHGL7E7Wt6qeJ4-nHt57x6J5_ozlaNMWdAj8zB7-thbEXLA1Dkh8ZgFllS/pub?gid=756749038&single=true&output=csv";
+
+const PRODUCTS = ["เอสเพรสโซ", "อเมริกาโน่", "ลาเต้", "คาปูชิโน่", "มอคค่า"];
+const PRODUCT_EN = { "เอสเพรสโซ": "Espresso", "อเมริกาโน่": "Americano", "ลาเต้": "Latte", "คาปูชิโน่": "Cappuccino", "มอคค่า": "Mocha" };
+const TYPES = ["hot", "ice"];
+const TAKES = ["for here", "to go"];
+
+// accents ใช้ร่วมกันสองธีม; neutrals เปลี่ยนตามธีม
+const ACCENT = { jade: "#5BB89A", clay: "#E07A4F", plum: "#B98BC9", sky: "#6FA8D6", red: "#D9534F" };
+const THEMES = {
+  dark: {
+    ...ACCENT, gold: "#E0A33E", goldDim: "#7d5e26",
+    bg: "#17120E", panel: "#211A14", panel2: "#2A201A", line: "#3B2D23",
+    text: "#F0E7DA", muted: "#A89685", dim: "#6E5E50",
+    tipBg: "#0e0b08", onAccent: "#1a130b",
+  },
+  light: {
+    ...ACCENT, gold: "#C8821E", goldDim: "#E0B868", clay: "#C9603A", jade: "#3E9E80", sky: "#4A89C0",
+    bg: "#FBF7F1", panel: "#FFFFFF", panel2: "#F3ECE2", line: "#E4D9C8",
+    text: "#2B2017", muted: "#7A6B5A", dim: "#A8997F",
+    tipBg: "#FFFFFF", onAccent: "#FFFFFF",
+  },
+};
+
+// ── i18n ──
+const STR = {
+  th: {
+    title: "แดชบอร์ดยอดขายร้านกาแฟ",
+    subtitle: (r, c) => <>ไฟล์ <code>coffee_data</code> · Google Sheet · {r} รายการ · {c} ลูกค้า</>,
+    syncing: "กำลังซิงค์…", syncFail: "ซิงค์ไม่สำเร็จ", syncOk: "ซิงค์กับ Google Sheet แล้ว", syncIdle: "ข้อมูลฝังในแอป (ยังไม่ได้ซิงค์)",
+    updated: (a) => `อัปเดตล่าสุด ${a}`, idleHint: "กดซิงค์เพื่อดึงข้อมูลสดจากชีต", rowsWord: "แถว",
+    err: { parse: "อ่านข้อมูล CSV ไม่สำเร็จ — รูปแบบไม่ตรง (เปิดดู debug)", net: "เชื่อมต่อชีตไม่ได้ — ตรวจว่า Publish to web เปิดอยู่ แล้วลองใหม่" },
+    agoSec: (n) => `${n} วินาทีที่แล้ว`, agoMin: (n) => `${n} นาทีที่แล้ว`,
+    syncNow: "ซิงค์เดี๋ยวนี้", syncingBtn: "กำลังซิงค์", autoLabel: "อัปเดตอัตโนมัติ · 1 นาที",
+    fMenu: "เมนู", fTemp: "อุณหภูมิ", fServe: "รูปแบบ", fPrice: "ราคา",
+    all: "ทั้งหมด", hot: "ร้อน", iced: "เย็น", dinein: "ทานที่ร้าน", takeaway: "ซื้อกลับ",
+    clear: "ล้างตัวกรอง",
+    kSales: "ยอดขายรวม", kCups: "จำนวนแก้ว", kCusts: "ลูกค้า", kAvg: "ราคาเฉลี่ย/แก้ว", kBasket: "ยอดเฉลี่ย/ลูกค้า",
+    salesSub: (p) => `${p}% ของยอดทั้งร้าน`, cupsSub: "แก้วที่ขายได้", custsSub: "คนที่ไม่ซ้ำ", avgSub: "ต่อแก้ว", basketSub: "ต่อบิล",
+    cSalesByMenu: "ยอดขายตามเมนู", cHiLo: "เรียงจากมากไปน้อย",
+    cHotIce: "ร้อน vs เย็น", cShare: "สัดส่วนยอดขาย",
+    cServe: "ทานที่ร้าน vs ซื้อกลับ", cPriceDist: "การกระจายตามระดับราคา", cCups: "จำนวนแก้ว",
+    legIce: "เย็น (ice)", legHot: "ร้อน (hot)", legTakeaway: "ซื้อกลับ (to go)", legDinein: "ทานที่ร้าน (for here)",
+    empty: "ไม่มีข้อมูลตรงกับตัวกรอง",
+    anaHead: "ผลการดำเนินงาน & ข้อเสนอแนะ", anaSub: "วิเคราะห์จากภาพรวมทั้งร้าน — ไม่ขึ้นกับตัวกรองด้านบน",
+    foot: "ดึง CSV สาธารณะจาก Google Sheets (Publish to web) แล้วรวมยอดในแอป · ทุกคนที่เปิดเห็นข้อมูลสด · อัปเดตอัตโนมัติทุก 60 วินาทีเมื่อเปิดใช้งาน",
+    bahtSuffix: " บาท", cupSuffix: " แก้ว",
+    dbgHead: (n) => `log จาก connector (${n} ตัวอักษร) — คัดลอกส่งมาให้ผมเพื่อปรับ parser`,
+    copy: "คัดลอก log", copied: "คัดลอกแล้ว ✓", hide: "ซ่อน",
+    themeTip: "สลับธีมมืด/สว่าง", langTip: "เปลี่ยนภาษา",
+    invTitle: (n) => `พบ ${n} แถวที่อาจไม่ถูกต้อง และถูกข้ามไป`,
+    invSub: "แถวเหล่านี้ไม่ถูกนำมาคำนวณ — ตรวจสอบและแก้ไขในชีต",
+    invShow: "ดูรายละเอียด", invHide: "ซ่อนรายละเอียด", invMore: (n) => `และอีก ${n} แถว`,
+    rProduct: "เมนูไม่รู้จัก", rType: "อุณหภูมิไม่ถูกต้อง", rService: "รูปแบบไม่ถูกต้อง", rPrice: "ราคาไม่ถูกต้อง", rIncomplete: "ข้อมูลไม่ครบคอลัมน์",
+    gapTitle: (got, max) => `อ่านได้ ${got} แถว แต่เลขลำดับสูงสุดในไฟล์คือ ${max}`,
+    gapSub: "อาจมีบางแถวที่อ่านไม่ครบจาก connector — ลองกดซิงค์อีกครั้ง",
+  },
+  en: {
+    title: "Coffee Shop Sales Dashboard",
+    subtitle: (r, c) => <><code>coffee_data</code> · Google Sheet · {r} orders · {c} customers</>,
+    syncing: "Syncing…", syncFail: "Sync failed", syncOk: "Synced with Google Sheet", syncIdle: "Embedded data (not synced yet)",
+    updated: (a) => `Updated ${a}`, idleHint: "Press sync to pull live data from the sheet", rowsWord: "rows",
+    err: { parse: "Couldn't read the CSV — unexpected format (see debug)", net: "Can't reach the sheet — check that Publish to web is on, then retry" },
+    agoSec: (n) => `${n}s ago`, agoMin: (n) => `${n}m ago`,
+    syncNow: "Sync now", syncingBtn: "Syncing", autoLabel: "Auto refresh · 1 min",
+    fMenu: "Menu", fTemp: "Temp", fServe: "Service", fPrice: "Price",
+    all: "All", hot: "Hot", iced: "Iced", dinein: "Dine-in", takeaway: "Takeaway",
+    clear: "Clear filters",
+    kSales: "Total sales", kCups: "Cups sold", kCusts: "Customers", kAvg: "Avg per cup", kBasket: "Avg per customer",
+    salesSub: (p) => `${p}% of store total`, cupsSub: "cups sold", custsSub: "unique", avgSub: "per cup", basketSub: "per bill",
+    cSalesByMenu: "Sales by menu", cHiLo: "high to low",
+    cHotIce: "Hot vs Iced", cShare: "share of sales",
+    cServe: "Dine-in vs Takeaway", cPriceDist: "Distribution by price", cCups: "cups",
+    legIce: "Iced", legHot: "Hot", legTakeaway: "Takeaway", legDinein: "Dine-in",
+    empty: "No data matches the filters",
+    anaHead: "Performance & Recommendations", anaSub: "Based on the whole store — independent of the filters above",
+    foot: "Reads the public Google Sheets CSV (Publish to web) and aggregates in-app · Everyone sees live data · Auto-refresh every 60s when on",
+    bahtSuffix: " THB", cupSuffix: " cups",
+    dbgHead: (n) => `Connector log (${n} chars) — copy and send it to me to tune the parser`,
+    copy: "Copy log", copied: "Copied ✓", hide: "Hide",
+    themeTip: "Toggle dark/light", langTip: "Change language",
+    invTitle: (n) => `${n} row${n > 1 ? "s" : ""} look invalid and were skipped`,
+    invSub: "These rows aren't counted — review and fix them in the sheet.",
+    invShow: "Show details", invHide: "Hide details", invMore: (n) => `and ${n} more`,
+    rProduct: "unknown menu", rType: "invalid temperature", rService: "invalid service", rPrice: "invalid price", rIncomplete: "missing columns",
+    gapTitle: (got, max) => `Read ${got} rows but the highest row number is ${max}`,
+    gapSub: "Some rows may not have been fully read from the connector — try syncing again.",
+  },
+};
+
+// ── สร้างข้อเสนอแนะแบบไดนามิกจากข้อมูลจริง (อิงภาพรวมทั้งร้าน) ──
+function buildRecs(rows, lang) {
+  const th = lang === "th";
+  const pn = (p) => (lang === "en" ? (PRODUCT_EN[p] || p) : p);
+  const n = (x) => Math.round(x).toLocaleString("en-US");
+  const B = (x) => "฿" + n(x);
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+  const tLab = (t) => (th ? (t === "ice" ? "เย็น" : "ร้อน") : (t === "ice" ? "iced" : "hot"));
+
+  let totalSales = 0, totalCups = 0; const custs = new Set();
+  const prod = {}; PRODUCTS.forEach((p) => prod[p] = { sales: 0, qty: 0, ice: 0, hot: 0 });
+  let iceSales = 0, hotSales = 0, toGoSales = 0, fhSales = 0, toGoCups = 0, fhCups = 0;
+  const priceCups = {};
+  for (const r of rows) {
+    const v = r.pr * r.q;
+    totalSales += v; totalCups += r.q; custs.add(r.cus);
+    if (prod[r.p]) { prod[r.p].sales += v; prod[r.p].qty += r.q; prod[r.p][r.t] += v; }
+    if (r.t === "ice") iceSales += v; else hotSales += v;
+    if (r.k === "to go") { toGoSales += v; toGoCups += r.q; } else { fhSales += v; fhCups += r.q; }
+    priceCups[r.pr] = (priceCups[r.pr] || 0) + r.q;
+  }
+  const ranked = PRODUCTS.map((p) => ({ p, ...prod[p] })).filter((d) => d.qty > 0).sort((a, b) => b.sales - a.sales);
+  if (!ranked.length || !totalCups) return [];
+  const hero = ranked[0], worst = ranked[ranked.length - 1];
+  const heroType = hero.ice >= hero.hot ? "ice" : "hot";
+  const custCount = custs.size || 1;
+  const cupsPer = totalCups / custCount, baskPer = totalSales / custCount;
+  const iceDom = iceSales >= hotSales, toGoDom = toGoSales >= fhSales;
+  const prices = Object.keys(priceCups).map(Number).sort((a, b) => priceCups[b] - priceCups[a]);
+  const topPrice = prices[0], topPriceCups = priceCups[topPrice] || 0;
+  const nextTier = [50, 60, 70].filter((x) => x > topPrice).sort((a, b) => a - b)[0];
+  const target = cupsPer + 0.2, growth = pct(target - cupsPer, cupsPer);
+
+  const recs = [];
+  recs.push({ color: "gold",
+    stat: `${pct(hero.sales, totalSales)}% ${th ? "ของยอด" : "of sales"}`,
+    title: th ? `${pn(hero.p)} คือพระเอก — ส่วนใหญ่เป็นแบบ${tLab(heroType)}` : `${pn(hero.p)} is the hero — mostly ${tLab(heroType)}`,
+    body: th
+      ? `${pn(hero.p)} ทำยอด ${B(hero.sales)} (สูงสุดในร้าน) จาก ${n(hero.qty)} แก้ว และส่วนใหญ่เป็นแบบ${tLab(heroType)} ควรชูเป็นเมนูซิกเนเจอร์ ออกสูตรพิเศษ และจัดคอมโบกับขนมเพื่อดันยอดต่อบิล`
+      : `${pn(hero.p)} leads at ${B(hero.sales)} (top in store) across ${n(hero.qty)} cups, mostly ${tLab(heroType)}. Feature it as a signature, launch special recipes, and bundle with pastries to lift the per-bill total.` });
+
+  const svPct = toGoDom ? pct(toGoSales, totalSales) : pct(fhSales, totalSales);
+  recs.push({ color: "sky",
+    stat: th ? `${svPct}% ${toGoDom ? "ซื้อกลับ" : "ทานที่ร้าน"}` : `${svPct}% ${toGoDom ? "takeaway" : "dine-in"}`,
+    title: th ? `ลูกค้าส่วนใหญ่${toGoDom ? "ซื้อกลับ (to go)" : "ทานที่ร้าน (for here)"}` : `Most customers ${toGoDom ? "order to go" : "dine in"}`,
+    body: th
+      ? `ยอด${toGoDom ? "ซื้อกลับ" : "ทานที่ร้าน"} ${B(toGoDom ? toGoSales : fhSales)} จาก ${n(toGoDom ? toGoCups : fhCups)} แก้ว ${toGoDom ? "ควรลงทุนกับความเร็วหน้าร้าน จุดรับแยก พรีออเดอร์/เดลิเวอรี และบรรจุภัณฑ์ที่ดี มากกว่าการขยายที่นั่ง" : "ควรลงทุนกับบรรยากาศ ที่นั่ง และประสบการณ์ในร้าน เพื่อให้ลูกค้าอยู่นานและสั่งเพิ่ม"}`
+      : `${toGoDom ? "Takeaway" : "Dine-in"} brings ${B(toGoDom ? toGoSales : fhSales)} from ${n(toGoDom ? toGoCups : fhCups)} cups. ${toGoDom ? "Invest in counter speed, a separate pickup point, pre-order/delivery and good packaging rather than more seating." : "Invest in ambience, seating and in-store experience so guests stay longer and order more."}` });
+
+  const tPct = iceDom ? pct(iceSales, totalSales) : pct(hotSales, totalSales);
+  recs.push({ color: iceDom ? "jade" : "clay",
+    stat: th ? `${tPct}% เป็นเมนู${iceDom ? "เย็น" : "ร้อน"}` : `${tPct}% ${iceDom ? "iced" : "hot"}`,
+    title: th ? `เครื่องดื่ม${iceDom ? "เย็น" : "ร้อน"}ครองตลาด` : `${iceDom ? "Iced" : "Hot"} drinks dominate`,
+    body: th
+      ? `ยอด${iceDom ? "เย็น" : "ร้อน"} ${B(iceDom ? iceSales : hotSales)} เทียบกับ${iceDom ? "ร้อน" : "เย็น"} ${B(iceDom ? hotSales : iceSales)} ${iceDom ? "ควรสต็อกน้ำแข็ง/แก้วเย็นให้พอช่วงพีค ออกเมนูเย็นตามฤดู และตรวจกำลังเครื่องทำน้ำแข็ง" : "ควรเน้นคุณภาพการสกัด/นม อุ่นแก้วก่อนเสิร์ฟ และออกเมนูร้อนพิเศษช่วงอากาศเย็น"}`
+      : `${iceDom ? "Iced" : "Hot"} is ${B(iceDom ? iceSales : hotSales)} vs ${iceDom ? "hot" : "iced"} ${B(iceDom ? hotSales : iceSales)}. ${iceDom ? "Keep enough ice and cold cups for peaks, add seasonal iced drinks, and check ice-machine capacity." : "Focus on extraction/milk quality, warm the cups, and add special hot drinks in cooler weather."}` });
+
+  recs.push({ color: "text",
+    stat: `฿${topPrice} = ${pct(topPriceCups, totalCups)}% ${th ? "ของบิล" : "of bills"}`,
+    title: th ? `ราคา ฿${topPrice} คือจุดสมดุล ใช้ดันอัปเซลล์` : `฿${topPrice} is the sweet spot for upsell`,
+    body: th
+      ? `แก้วราคา ฿${topPrice} ขายได้ ${n(topPriceCups)} แก้ว มากที่สุด ${nextTier ? `ตั้งคอมโบ/ไซซ์อัปให้ขยับจาก ฿${topPrice} ไป ฿${nextTier} ได้ง่าย เช่น เพิ่มช็อต/ท็อปปิ้ง +฿${nextTier - topPrice} เพิ่มยอดเฉลี่ยต่อแก้วทันที` : `ลองออกเมนูพรีเมียม/ไซซ์พิเศษเหนือ ฿${topPrice} เพื่อยกเพดานราคา`}`
+      : `฿${topPrice} cups sell the most at ${n(topPriceCups)} cups. ${nextTier ? `Build combos/size-ups to nudge ฿${topPrice} → ฿${nextTier} (e.g. +฿${nextTier - topPrice} extra shot/topping) to raise the average ticket.` : `Introduce premium/special sizes above ฿${topPrice} to lift the price ceiling.`}` });
+
+  if (worst && worst.p !== hero.p) {
+    recs.push({ color: "clay",
+      stat: th ? `ต่ำสุด ${B(worst.sales)}` : `lowest ${B(worst.sales)}`,
+      title: th ? `${pn(worst.p)} ยอดน้อยสุด — ทบทวนเมนู` : `${pn(worst.p)} is the weakest — review it`,
+      body: th
+        ? `${pn(worst.p)} ขายได้ ${n(worst.qty)} แก้ว ต่ำกว่าทุกเมนู ลองจับคู่โปรโมชัน ปรับสูตร/ราคา หรือทำเป็นเมนูพิเศษหมุนเวียน หากยังไม่ขยับควรพิจารณาตัดเพื่อลดของเสียและความซับซ้อนหลังบาร์`
+        : `${pn(worst.p)} sold ${n(worst.qty)} cups, below every other drink. Try a promo pairing, a recipe/price tweak, or a rotating special; if it stays flat, consider cutting it to reduce waste and bar complexity.` });
+  }
+
+  recs.push({ color: "jade",
+    stat: th ? `${cupsPer.toFixed(2)} แก้ว/ลูกค้า` : `${cupsPer.toFixed(2)} cups/customer`,
+    title: th ? "ดันยอดต่อหัวให้สูงขึ้น" : "Push per-head higher",
+    body: th
+      ? `เฉลี่ย ${B(baskPer)}/ลูกค้า (${cupsPer.toFixed(2)} แก้ว/คน) ทำโปร 'แก้วที่ 2 ลด' หรือเซ็ตคู่/ขนมจับคู่ ถ้าดันค่าเฉลี่ยขึ้นเป็น ${target.toFixed(1)} แก้ว/คน ยอดรวมจะโตราว ${growth}% โดยไม่ต้องหาลูกค้าใหม่`
+      : `Average ${B(baskPer)}/customer (${cupsPer.toFixed(2)} cups each). Run a '2nd cup discount' or pairing sets; lifting to ${target.toFixed(1)} cups/customer grows total revenue ~${growth}% with no new customers.` });
+
+  return recs;
+}
+
+const baht = (n) => "฿" + Math.round(n).toLocaleString("en-US");
+
+// ── parser: คืน {rows, issues}
+// rows = แถวที่ถูกต้อง · issues = แถวที่ "ดูเหมือนข้อมูล" แต่ค่าผิด (ไม่นับ แต่แจ้งเตือน)
+// แยกแถวข้อมูลออกจากหัวตาราง/เส้นคั่น/ตารางสรุป ด้วย: คอลัมน์แรกเป็นเลขลำดับ + คอลัมน์ที่สองเป็นรหัสลูกค้า (ขึ้นต้นด้วยตัวอักษร)
+function parseSheet(raw) {
+  const rows = [], issues = [];
+  let found = 0, maxNo = 0;
+  for (let ln of String(raw).split(/\\r\\n|\\n|\r?\n/)) {
+    const isMd = ln.indexOf("|") >= 0;
+    if (!isMd && ln.indexOf(",") < 0) continue;
+    let cells = (isMd ? ln.split("|") : ln.split(",")).map((c) => c.trim());
+    if (isMd) { // ตัดเฉพาะช่องว่างขอบของ markdown (| ... |) ไม่แตะช่อง No. ที่เว้นว่าง
+      if (cells.length && cells[0] === "") cells.shift();
+      if (cells.length && cells[cells.length - 1] === "") cells.pop();
+    }
+    if (cells.length < 5) continue;
+
+    // ยึดคอลัมน์ Product/Type/take จากเนื้อหา แล้วหาคอลัมน์อื่นจากตำแหน่งสัมพัทธ์
+    // ลำดับมาตรฐาน: [No, Cus, Product, Type, take, Order, Price]
+    const pi = cells.findIndex((c) => PRODUCTS.includes(c));
+    const ti = cells.findIndex((c) => TYPES.includes(c));
+    const ki = cells.findIndex((c) => TAKES.includes(c));
+    if (pi < 0 && ti < 0 && ki < 0) continue; // หัวตาราง/เส้นคั่น/ตารางสรุปปี → ข้าม
+    const base = pi >= 0 ? pi : (ti >= 0 ? ti - 1 : ki - 2); // index ของคอลัมน์ Product
+    if (base < 0) continue;
+
+    found++;
+    const noNum = parseInt(cells[0], 10); if (!isNaN(noNum) && noNum > maxNo) maxNo = noNum;
+    const snippet = ln.replace(/\s+/g, " ").trim().slice(0, 120);
+
+    const cus = base - 1 >= 0 ? cells[base - 1] : "?";
+    const product = cells[base], type = cells[base + 1], take = cells[base + 2];
+    const order = cells[base + 3], price = cells[base + 4];
+    if (price === undefined || type === undefined || take === undefined) { issues.push({ raw: snippet, code: "incomplete" }); continue; }
+    if (!PRODUCTS.includes(product)) { issues.push({ raw: snippet, code: "product", val: product }); continue; }
+    if (!TYPES.includes(type)) { issues.push({ raw: snippet, code: "type", val: type }); continue; }
+    if (!TAKES.includes(take)) { issues.push({ raw: snippet, code: "service", val: take }); continue; }
+    const pr = parseInt(price, 10);
+    if (isNaN(pr)) { issues.push({ raw: snippet, code: "price", val: price }); continue; }
+    const q = parseInt(order, 10) || 1;
+    rows.push({ cus: cus || "?", p: product, t: type, k: take, pr, q });
+  }
+  return { rows, issues, found, maxNo };
+}
+// เก็บทุก string; ถ้าเป็น JSON ให้ parse เพื่อถอด \n ที่ escape แล้วใช้เฉพาะตัวที่ถอด (กันนับซ้ำ)
+function collectText(node, acc, depth) {
+  depth = depth || 0;
+  if (node == null || depth > 6) return;
+  if (typeof node === "string") {
+    const t = node.trim();
+    if (((t[0] === "{" && t[t.length - 1] === "}") || (t[0] === "[" && t[t.length - 1] === "]")) && t.length > 12) {
+      try { collectText(JSON.parse(node), acc, depth + 1); return; } catch (_) {}
+    }
+    acc.push(node);
+    return;
+  }
+  if (Array.isArray(node)) { for (const x of node) collectText(x, acc, depth + 1); return; }
+  if (typeof node === "object") { for (const key in node) collectText(node[key], acc, depth + 1); }
+}
+function b64decode(s) {
+  try {
+    const clean = s.replace(/\s+/g, "");
+    if (clean.length < 80 || !/^[A-Za-z0-9+/=]+$/.test(clean)) return "";
+    const bin = atob(clean);
+    return new TextDecoder("utf-8").decode(Uint8Array.from(bin, (ch) => ch.charCodeAt(0)));
+  } catch (_) { return ""; }
+}
+
+async function fetchLiveData() {
+  // ดึง CSV สาธารณะจาก Google Sheets (Publish to web) ตรง ๆ — ทุกคนเข้าถึงได้ ไม่ต้องล็อกอิน
+  const url = CSV_URL + (CSV_URL.indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now(); // กันแคชฝั่ง browser
+  let res;
+  try {
+    res = await fetch(url, { cache: "no-store" });
+  } catch (e) {
+    throw new Error("NETWORK");
+  }
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const text = await res.text();
+  const parsed = parseSheet(text);
+  if (!parsed.rows.length) {
+    const err = new Error("PARSE_FAIL");
+    err.sample = (text || "(empty response)").slice(0, 4000);
+    throw err;
+  }
+  return parsed;
+}
+
+function summarize(rows, f) {
+  const sel = rows.filter((r) =>
+    (f.product === null || r.p === f.product) &&
+    (f.type === null || r.t === f.type) &&
+    (f.take === null || r.k === f.take) &&
+    (f.price === null || r.pr === f.price));
+  let cups = 0, sales = 0; const custs = new Set();
+  const prod = {}; PRODUCTS.forEach((p) => prod[p] = { name: p, sales: 0, qty: 0 });
+  const typ = { hot: 0, ice: 0 }, tak = { "for here": 0, "to go": 0 }, price = {};
+  for (const r of sel) {
+    const v = r.pr * r.q;
+    cups += r.q; sales += v; custs.add(r.cus);
+    if (prod[r.p]) { prod[r.p].sales += v; prod[r.p].qty += r.q; }
+    if (r.t in typ) typ[r.t] += v;
+    if (r.k in tak) tak[r.k] += v;
+    price[r.pr] = (price[r.pr] || 0) + r.q;
+  }
+  return { cups, sales, custCount: custs.size, prod, typ, tak, price };
+}
+
+function CoffeeDashboard() {
+  const [theme, setTheme] = useState("dark");
+  const [lang, setLang] = useState("th");
+  const T = THEMES[theme];
+  const L = STR[lang];
+  const pname = (p) => (lang === "en" ? (PRODUCT_EN[p] || p) : p);
+
+  const [rows, setRows] = useState(SEED_ROWS);
+  const [synced, setSynced] = useState(false);
+  const [lastSync, setLastSync] = useState(null);
+  const [status, setStatus] = useState("idle");
+  const [errCode, setErrCode] = useState("");
+  const [errRaw, setErrRaw] = useState("");
+  const [debugRaw, setDebugRaw] = useState("");
+  const [showDebug, setShowDebug] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [auto, setAuto] = useState(false);
+  const [issues, setIssues] = useState([]);
+  const [meta, setMeta] = useState(null);
+  const [issuesHidden, setIssuesHidden] = useState(false);
+  const [issuesOpen, setIssuesOpen] = useState(false);
+  const loading = status === "syncing";
+
+  const [fProduct, setFProduct] = useState(null);
+  const [fType, setFType] = useState(null);
+  const [fTake, setFTake] = useState(null);
+  const [fPrice, setFPrice] = useState(null);
+
+  const timer = useRef(null);
+  const didMount = useRef(false);
+
+  const sync = useCallback(async () => {
+    setStatus("syncing"); setErrCode(""); setErrRaw(""); setDebugRaw("");
+    try {
+      const fresh = await fetchLiveData();
+      setRows(fresh.rows); setIssues(fresh.issues || []); setIssuesHidden(false); setIssuesOpen(false);
+      setMeta({ valid: fresh.rows.length, found: fresh.found || 0, maxNo: fresh.maxNo || 0 });
+      setSynced(true); setLastSync(new Date()); setStatus("ok");
+    } catch (e) {
+      const m = e.message || String(e);
+      if (m === "PARSE_FAIL") setErrCode("parse");
+      else if (m === "NETWORK") setErrCode("net");
+      else { setErrCode("raw"); setErrRaw(m); }
+      if (e.sample) { setDebugRaw(e.sample); setShowDebug(true); }
+      setStatus("error");
+    }
+  }, []);
+
+  const copyDebug = useCallback(() => {
+    const text = debugRaw || "";
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600); }, () => {});
+        return;
+      }
+    } catch (_) {}
+    const el = document.getElementById("dbg-pre");
+    if (el) { const r = document.createRange(); r.selectNodeContents(el); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+  }, [debugRaw]);
+
+  // ดึงข้อมูลสดอัตโนมัติหนึ่งครั้งตอนเปิดแดชบอร์ด (seed ใช้แสดงผลทันทีระหว่างรอ)
+  useEffect(() => {
+    if (didMount.current) return;
+    didMount.current = true;
+    sync();
+  }, [sync]);
+
+  useEffect(() => {
+    if (auto) { sync(); timer.current = setInterval(sync, 60000); }
+    return () => { if (timer.current) clearInterval(timer.current); };
+  }, [auto, sync]);
+
+  const [, setTick] = useState(0);
+  useEffect(() => { const t = setInterval(() => setTick((x) => x + 1), 1000); return () => clearInterval(t); }, []);
+
+  const f = { product: fProduct, type: fType, take: fTake, price: fPrice };
+  const S = useMemo(() => summarize(rows, f), [rows, fProduct, fType, fTake, fPrice]);
+  const totalSales = useMemo(() => rows.reduce((s, r) => s + r.pr * r.q, 0), [rows]);
+  const totalCusts = useMemo(() => new Set(rows.map((r) => r.cus)).size, [rows]);
+
+  const byProduct = useMemo(() =>
+    Object.values(S.prod).filter((d) => d.qty > 0).sort((a, b) => b.sales - a.sales)
+      .map((d) => ({ ...d, label: pname(d.name) })), [S, lang]);
+  const byType = useMemo(() => [
+    { name: L.legIce, value: S.typ.ice, fill: T.jade },
+    { name: L.legHot, value: S.typ.hot, fill: T.clay },
+  ].filter((d) => d.value > 0), [S, T, L]);
+  const byTake = useMemo(() => [
+    { name: L.legTakeaway, value: S.tak["to go"], fill: T.gold },
+    { name: L.legDinein, value: S.tak["for here"], fill: T.sky },
+  ].filter((d) => d.value > 0), [S, T, L]);
+  const byPrice = useMemo(() => [50, 60, 70].map((p) => ({ name: "฿" + p, value: S.price[p] || 0 })), [S]);
+
+  const avg = S.cups ? S.sales / S.cups : 0;
+  const basket = S.custCount ? S.sales / S.custCount : 0;
+  const recs = useMemo(() => buildRecs(rows, lang), [rows, lang]);
+  const reset = () => { setFProduct(null); setFType(null); setFTake(null); setFPrice(null); };
+  const active = [fProduct, fType, fTake, fPrice].filter((x) => x !== null).length;
+
+  const ago = lastSync ? Math.floor((Date.now() - lastSync.getTime()) / 1000) : null;
+  const agoTxt = ago === null ? "" : ago < 60 ? L.agoSec(ago) : L.agoMin(Math.floor(ago / 60));
+  const colorOf = (key) => (key === "text" ? T.text : T[key]);
+  const reasonText = (it) => {
+    const m = { product: L.rProduct, type: L.rType, service: L.rService, price: L.rPrice, incomplete: L.rIncomplete };
+    return m[it.code] + (it.val ? `: "${it.val}"` : "");
+  };
+
+  return (
+    <div className={"cd-root" + (theme === "light" ? " light" : "")}>
+      <style>{CSS}</style>
+
+      <header className="cd-head">
+        <div className="cd-mark">
+          <svg width="30" height="30" viewBox="0 0 34 34" fill="none">
+            <path d="M6 13h17v7a8 8 0 01-8 8h-1a8 8 0 01-8-8v-7z" stroke={T.gold} strokeWidth="1.6"/>
+            <path d="M23 15h3a3.5 3.5 0 010 7h-3" stroke={T.gold} strokeWidth="1.6"/>
+            <path d="M11 4c-1 1.5-1 3 0 4.5M16 3.5c-1 1.5-1 3 0 4.5" stroke={T.jade} strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </div>
+        <div className="cd-titleblock">
+          <h1>{L.title}</h1>
+          <p>{L.subtitle(rows.length, totalCusts)}</p>
+        </div>
+        <div className="cd-toggles">
+          <button className="icon-btn" title={L.themeTip} aria-label={L.themeTip} onClick={() => setTheme((v) => v === "dark" ? "light" : "dark")}>
+            {theme === "dark" ? (
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="1.7"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>
+            ) : (
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M21 12.8A8.5 8.5 0 1111.2 3a6.5 6.5 0 009.8 9.8z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/></svg>
+            )}
+          </button>
+          <div className="lang-pill">
+            <button className={lang === "th" ? "on" : ""} onClick={() => setLang("th")}>ไทย</button>
+            <button className={lang === "en" ? "on" : ""} onClick={() => setLang("en")}>EN</button>
+          </div>
+        </div>
+      </header>
+
+      <section className="cd-sync">
+        <div className="sync-left">
+          <span className={"sdot " + status} />
+          <div className="sync-txt">
+            <strong>{loading ? L.syncing : status === "error" ? L.syncFail : synced ? L.syncOk : L.syncIdle}</strong>
+            <small className={status === "error" ? "err" : ""}>
+              {status === "error" ? (errCode === "raw" ? errRaw : (L.err[errCode] || L.idleHint))
+                : lastSync ? `${L.updated(agoTxt)} · ${rows.length} ${L.rowsWord}`
+                : L.idleHint}
+            </small>
+          </div>
+        </div>
+        <div className="sync-right">
+          <button className="sync-btn" onClick={sync} disabled={loading}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className={loading ? "spin" : ""}>
+              <path d="M21 12a9 9 0 11-3-6.7M21 3v5h-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {loading ? L.syncingBtn : L.syncNow}
+          </button>
+          <label className="toggle">
+            <span className="tg-label">{L.autoLabel}</span>
+            <span className={"tg" + (auto ? " on" : "")} onClick={() => setAuto((v) => !v)} role="switch" aria-checked={auto}>
+              <span className="knob" />
+            </span>
+          </label>
+        </div>
+      </section>
+
+      {showDebug && debugRaw ? (
+        <section className="cd-debug">
+          <div className="dbg-bar">
+            <span className="dbg-head">{L.dbgHead(debugRaw.length)}</span>
+            <div className="dbg-actions">
+              <button className="dbg-btn" onClick={copyDebug}>{copied ? L.copied : L.copy}</button>
+              <button className="dbg-btn ghost" onClick={() => setShowDebug(false)}>{L.hide}</button>
+            </div>
+          </div>
+          <pre id="dbg-pre" className="dbg-pre">{debugRaw}</pre>
+        </section>
+      ) : null}
+
+      {meta && meta.maxNo > meta.found && !issuesHidden ? (
+        <section className="cd-info">
+          <div className="info-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 16.5h.01M10.3 3.9 2.4 18a2 2 0 001.7 3h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <div className="info-txt">
+              <strong>{L.gapTitle(meta.found, meta.maxNo)}</strong>
+              <small>{L.gapSub}</small>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {issues.length > 0 && !issuesHidden ? (
+        <section className="cd-info">
+          <div className="info-row">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 16.5h.01M10.3 3.9 2.4 18a2 2 0 001.7 3h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <div className="info-txt">
+              <strong>{L.invTitle(issues.length)}</strong>
+              <small>{L.invSub}</small>
+            </div>
+            <div className="info-actions">
+              <button className="info-btn" onClick={() => setIssuesOpen((o) => !o)}>{issuesOpen ? L.invHide : L.invShow}</button>
+              <button className="info-x" aria-label="dismiss" onClick={() => setIssuesHidden(true)}>✕</button>
+            </div>
+          </div>
+          {issuesOpen ? (
+            <ul className="info-list">
+              {issues.slice(0, 12).map((it, i) => (
+                <li key={i}><span className="ic-reason">{reasonText(it)}</span><code>{it.raw}</code></li>
+              ))}
+              {issues.length > 12 ? <li className="ic-more">{L.invMore(issues.length - 12)}</li> : null}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
+
+      <section className="cd-filters">
+        <div className="seg-wrap">
+          <span className="seg-label">{L.fMenu}</span>
+          <div className="seg scroll">
+            <button className={"seg-btn" + (fProduct === null ? " on" : "")} onClick={() => setFProduct(null)}>{L.all}</button>
+            {PRODUCTS.map((p) => (
+              <button key={p} className={"seg-btn" + (fProduct === p ? " on" : "")} onClick={() => setFProduct(p)}>{pname(p)}</button>
+            ))}
+          </div>
+        </div>
+        <Segmented label={L.fTemp} value={fType} onChange={setFType}
+          options={[{ t: L.all, v: null }, { t: L.hot, v: "hot" }, { t: L.iced, v: "ice" }]} />
+        <Segmented label={L.fServe} value={fTake} onChange={setFTake}
+          options={[{ t: L.all, v: null }, { t: L.dinein, v: "for here" }, { t: L.takeaway, v: "to go" }]} />
+        <Segmented label={L.fPrice} value={fPrice} onChange={setFPrice}
+          options={[{ t: L.all, v: null }, { t: "฿50", v: 50 }, { t: "฿60", v: 60 }, { t: "฿70", v: 70 }]} />
+        <button className={"reset" + (active ? " show" : "")} onClick={reset}>{L.clear} ({active})</button>
+      </section>
+
+      <section className="cd-kpis">
+        <Kpi loading={loading} l={L.kSales} v={baht(S.sales)} s={L.salesSub(((S.sales / totalSales) * 100 || 0).toFixed(0))} c={T.gold} />
+        <Kpi loading={loading} l={L.kCups} v={S.cups.toLocaleString()} s={L.cupsSub} c={T.text} />
+        <Kpi loading={loading} l={L.kCusts} v={S.custCount.toLocaleString()} s={L.custsSub} c={T.text} />
+        <Kpi loading={loading} l={L.kAvg} v={baht(avg)} s={L.avgSub} c={T.jade} />
+        <Kpi loading={loading} l={L.kBasket} v={baht(basket)} s={L.basketSub} c={T.clay} />
+      </section>
+
+      <section className="cd-grid">
+        <div className="card span2">
+          <div className="card-h"><h3>{L.cSalesByMenu}</h3><span>{L.cHiLo}</span></div>
+          {loading ? <Shimmer h={byProduct.length ? Math.max(150, byProduct.length * 44) : 200} />
+            : byProduct.length ? (
+            <ResponsiveContainer width="100%" height={Math.max(150, byProduct.length * 44)}>
+              <BarChart data={byProduct} layout="vertical" margin={{ left: 4, right: 56, top: 4, bottom: 4 }}>
+                <XAxis type="number" hide />
+                <YAxis type="category" dataKey="label" width={90} tick={{ fill: T.text, fontSize: 12 }} axisLine={false} tickLine={false} />
+                <Tooltip cursor={{ fill: theme === "dark" ? "#ffffff08" : "#00000008" }} content={<Tip T={T} suffix={L.bahtSuffix} />} />
+                <Bar dataKey="sales" radius={[0, 6, 6, 0]} barSize={20}>
+                  {byProduct.map((d, i) => <Cell key={i} fill={[T.gold, T.clay, T.jade, T.sky, T.plum][i % 5]} />)}
+                  <LabelList dataKey="sales" position="right" formatter={(v) => baht(v)} style={{ fill: T.muted, fontSize: 11 }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : <Empty L={L} />}
+        </div>
+
+        <div className="card">
+          <div className="card-h"><h3>{L.cHotIce}</h3><span>{L.cShare}</span></div>
+          {loading ? <DonutSkeleton /> : <Donut data={byType} T={T} L={L} />}
+        </div>
+        <div className="card">
+          <div className="card-h"><h3>{L.cServe}</h3><span>{L.cShare}</span></div>
+          {loading ? <DonutSkeleton /> : <Donut data={byTake} T={T} L={L} />}
+        </div>
+
+        <div className="card span2">
+          <div className="card-h"><h3>{L.cPriceDist}</h3><span>{L.cCups}</span></div>
+          {loading ? <Shimmer h={170} />
+            : S.cups ? (
+            <ResponsiveContainer width="100%" height={170}>
+              <BarChart data={byPrice} margin={{ left: -20, right: 8, top: 12, bottom: 0 }}>
+                <XAxis dataKey="name" tick={{ fill: T.text, fontSize: 12 }} axisLine={{ stroke: T.line }} tickLine={false} />
+                <YAxis tick={{ fill: T.dim, fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip cursor={{ fill: theme === "dark" ? "#ffffff08" : "#00000008" }} content={<Tip T={T} suffix={L.cupSuffix} />} />
+                <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={56}>
+                  {byPrice.map((d, i) => <Cell key={i} fill={[T.goldDim, T.gold, "#f2c46b"][i]} />)}
+                  <LabelList dataKey="value" position="top" style={{ fill: T.muted, fontSize: 12 }} />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : <Empty L={L} />}
+        </div>
+      </section>
+
+      <section className="cd-analysis">
+        <div className="an-head">
+          <h2>{L.anaHead}</h2>
+          <p>{L.anaSub}</p>
+        </div>
+        <div className="an-grid">
+          {loading
+            ? Array.from({ length: recs.length || 6 }).map((_, i) => <RecSkeleton key={i} />)
+            : recs.map((r, i) => (
+              <div className="rec" key={i}>
+                <div className="rec-top">
+                  <span className="rec-num">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="rec-stat" style={{ color: colorOf(r.color) }}>{r.stat}</span>
+                </div>
+                <h4>{r.title}</h4>
+                <p>{r.body}</p>
+              </div>
+            ))}
+        </div>
+      </section>
+
+      <footer className="cd-foot">{L.foot}</footer>
+    </div>
+  );
+}
+
+function Kpi({ l, v, s, c, loading }) {
+  return (
+    <div className="kpi">
+      <div className="kpi-l">{l}</div>
+      {loading ? (<><Shimmer h={26} w="72%" r={6} style={{ margin: "7px 0 5px" }} /><Shimmer h={9} w="50%" r={4} /></>)
+        : (<><div className="kpi-v" style={{ color: c }}>{v}</div><div className="kpi-s">{s}</div></>)}
+    </div>
+  );
+}
+function Segmented({ label, options, value, onChange }) {
+  return (
+    <div className="seg-wrap">
+      <span className="seg-label">{label}</span>
+      <div className="seg">
+        {options.map((o) => (
+          <button key={String(o.v)} className={"seg-btn" + (value === o.v ? " on" : "")} onClick={() => onChange(o.v)}>{o.t}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+function Donut({ data, T, L }) {
+  const total = data.reduce((s, d) => s + d.value, 0);
+  if (!total) return <Empty L={L} />;
+  return (
+    <div className="donut-row">
+      <div className="donut-chart">
+        <ResponsiveContainer width="100%" height={150}>
+          <PieChart>
+            <Pie data={data} dataKey="value" nameKey="name" innerRadius={42} outerRadius={62} paddingAngle={2} stroke="none">
+              {data.map((d, i) => <Cell key={i} fill={d.fill} />)}
+            </Pie>
+            <Tooltip content={<Tip T={T} suffix={L.bahtSuffix} />} />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="legend">
+        {data.map((d, i) => (
+          <div className="leg" key={i}>
+            <span className="dot" style={{ background: d.fill }} />
+            <div><div className="leg-n">{d.name}</div><div className="leg-v">{baht(d.value)} · {((d.value / total) * 100).toFixed(0)}%</div></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+function DonutSkeleton() {
+  return (
+    <div className="donut-row">
+      <div className="donut-chart" style={{ display: "grid", placeItems: "center", height: 150 }}>
+        <div className="skel skel-ring" />
+      </div>
+      <div className="legend">
+        <div className="leg"><Shimmer h={11} w={11} r={3} /><Shimmer h={12} w="70%" r={4} /></div>
+        <div className="leg"><Shimmer h={11} w={11} r={3} /><Shimmer h={12} w="55%" r={4} /></div>
+      </div>
+    </div>
+  );
+}
+function Shimmer({ h, w = "100%", r = 8, style }) {
+  return <div className="skel" style={{ height: h, width: w, borderRadius: r, ...(style || {}) }} />;
+}
+function RecSkeleton() {
+  return (
+    <div className="rec">
+      <div className="rec-top">
+        <Shimmer h={13} w={22} r={4} />
+        <Shimmer h={12} w="34%" r={4} />
+      </div>
+      <Shimmer h={14} w="85%" r={5} style={{ margin: "2px 0 9px" }} />
+      <Shimmer h={10} w="100%" r={4} style={{ marginBottom: 6 }} />
+      <Shimmer h={10} w="96%" r={4} style={{ marginBottom: 6 }} />
+      <Shimmer h={10} w="60%" r={4} />
+    </div>
+  );
+}
+function Tip({ active, payload, suffix, T }) {
+  if (!active || !payload || !payload.length) return null;
+  const p = payload[0];
+  return (<div style={{ background: T.tipBg, border: "1px solid " + T.line, borderRadius: 8, padding: "6px 10px", color: T.text, fontSize: 12, boxShadow: "0 4px 14px rgba(0,0,0,.25)" }}>
+    <div style={{ color: T.muted }}>{p.payload.name}</div>
+    <div style={{ fontWeight: 600 }}>{p.value.toLocaleString()}{suffix}</div></div>);
+}
+function Empty({ L }) { return <div className="empty">{L.empty}</div>; }
+
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap');
+.cd-root{
+  --bg:${THEMES.dark.bg};--panel:${THEMES.dark.panel};--panel2:${THEMES.dark.panel2};--line:${THEMES.dark.line};
+  --text:${THEMES.dark.text};--muted:${THEMES.dark.muted};--dim:${THEMES.dark.dim};
+  --gold:${THEMES.dark.gold};--goldDim:${THEMES.dark.goldDim};--jade:${THEMES.dark.jade};--clay:${THEMES.dark.clay};--red:${THEMES.dark.red};
+  --code:#0e0b08;--shimmer:#ffffff16;--onAccent:${THEMES.dark.onAccent};
+  font-family:'Space Grotesk','IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(--text);
+  padding:clamp(12px,3vw,22px);border-radius:14px;min-height:100%;-webkit-font-smoothing:antialiased;transition:background .25s,color .25s;
+  overflow-x:hidden;max-width:100%;
+}
+.cd-root.light{
+  --bg:${THEMES.light.bg};--panel:${THEMES.light.panel};--panel2:${THEMES.light.panel2};--line:${THEMES.light.line};
+  --text:${THEMES.light.text};--muted:${THEMES.light.muted};--dim:${THEMES.light.dim};
+  --gold:${THEMES.light.gold};--goldDim:${THEMES.light.goldDim};--jade:${THEMES.light.jade};--clay:${THEMES.light.clay};--red:${THEMES.light.red};
+  --code:#EFE6D8;--shimmer:#0000000f;--onAccent:#1a130b;
+}
+.cd-root *{box-sizing:border-box;}
+.cd-root code{font-family:'Space Grotesk',monospace;background:var(--code);padding:1px 6px;border-radius:5px;color:var(--gold);font-size:.9em;}
+.cd-head{display:flex;align-items:center;gap:13px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:14px;}
+.cd-mark{width:46px;height:46px;display:grid;place-items:center;background:var(--panel);border:1px solid var(--line);border-radius:11px;flex:none;}
+.cd-titleblock{flex:1;min-width:160px;}
+.cd-titleblock h1{margin:0;font-size:clamp(17px,4.5vw,22px);font-weight:600;letter-spacing:-.01em;}
+.cd-titleblock p{margin:3px 0 0;color:var(--muted);font-size:12px;font-family:'IBM Plex Sans Thai',sans-serif;}
+.cd-toggles{display:flex;align-items:center;gap:8px;flex:none;}
+.icon-btn{width:34px;height:34px;display:grid;place-items:center;border-radius:9px;background:var(--panel2);border:1px solid var(--line);color:var(--text);cursor:pointer;transition:all .15s;}
+.icon-btn:hover{border-color:var(--gold);color:var(--gold);}
+.lang-pill{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;}
+.lang-pill button{font-family:'IBM Plex Sans Thai',sans-serif;font-size:12px;font-weight:600;padding:7px 11px;background:var(--panel2);color:var(--muted);border:none;cursor:pointer;transition:all .15s;}
+.lang-pill button.on{background:var(--gold);color:var(--onAccent);}
+.cd-sync{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 15px;margin-bottom:14px;}
+.sync-left{display:flex;align-items:center;gap:11px;min-width:0;}
+.sdot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--dim);}
+.sdot.ok{background:var(--jade);animation:pulse 2.4s infinite;}
+.sdot.syncing{background:var(--gold);animation:blink .9s infinite;}
+.sdot.error{background:var(--red);}
+@keyframes pulse{0%{box-shadow:0 0 0 0 #5bb89a55;}70%{box-shadow:0 0 0 7px #5bb89a00;}100%{box-shadow:0 0 0 0 #5bb89a00;}}
+@keyframes blink{50%{opacity:.3;}}
+.sync-txt{display:flex;flex-direction:column;min-width:0;}
+.sync-txt strong{font-size:13px;font-weight:600;font-family:'IBM Plex Sans Thai',sans-serif;}
+.sync-txt small{font-size:11px;color:var(--muted);font-family:'IBM Plex Sans Thai',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60vw;}
+.sync-txt small.err{white-space:normal;overflow:visible;text-overflow:clip;max-width:none;line-height:1.45;color:var(--clay);}
+.sync-right{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.sync-btn{display:inline-flex;align-items:center;gap:7px;font-family:'IBM Plex Sans Thai',sans-serif;font-size:13px;font-weight:600;padding:8px 14px;border-radius:9px;background:var(--gold);color:var(--onAccent);border:none;cursor:pointer;transition:filter .15s;}
+.sync-btn:hover{filter:brightness(1.08);}
+.sync-btn:disabled{opacity:.55;cursor:default;}
+.spin{animation:spin 1s linear infinite;}@keyframes spin{to{transform:rotate(360deg);}}
+.toggle{display:flex;align-items:center;gap:9px;cursor:pointer;}
+.tg-label{font-size:11.5px;color:var(--muted);font-family:'IBM Plex Sans Thai',sans-serif;}
+.tg{width:40px;height:23px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);position:relative;transition:background .2s;flex:none;}
+.tg .knob{position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:var(--dim);transition:all .2s;}
+.tg.on{background:var(--jade);border-color:var(--jade);}
+.tg.on .knob{left:19px;background:#0e1a16;}
+.cd-info{background:var(--panel);border:1px solid var(--clay);border-left:3px solid var(--clay);border-radius:12px;padding:12px 15px;margin-bottom:14px;}
+.info-row{display:flex;align-items:flex-start;gap:11px;}
+.info-row>svg{color:var(--clay);flex:none;margin-top:1px;}
+.info-txt{flex:1;min-width:0;display:flex;flex-direction:column;}
+.info-txt strong{font-size:13px;font-weight:600;font-family:'IBM Plex Sans Thai',sans-serif;color:var(--clay);}
+.info-txt small{font-size:11.5px;color:var(--muted);font-family:'IBM Plex Sans Thai',sans-serif;margin-top:1px;}
+.info-actions{display:flex;gap:7px;align-items:center;flex:none;}
+.info-btn{font-family:'IBM Plex Sans Thai',sans-serif;font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:7px;background:transparent;color:var(--clay);border:1px solid var(--clay);cursor:pointer;white-space:nowrap;}
+.info-btn:hover{background:var(--clay);color:var(--onAccent);}
+.info-x{background:transparent;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:2px 4px;line-height:1;}
+.info-x:hover{color:var(--clay);}
+.info-list{margin:11px 0 0;padding:11px 0 0;border-top:1px solid var(--line);list-style:none;display:flex;flex-direction:column;gap:7px;max-height:210px;overflow:auto;}
+.info-list li{font-size:11.5px;display:flex;flex-wrap:wrap;gap:7px;align-items:baseline;font-family:'IBM Plex Sans Thai',sans-serif;}
+.ic-reason{color:var(--clay);font-weight:600;flex:none;}
+.info-list code{background:var(--code);color:var(--text);padding:1px 7px;border-radius:5px;font-family:'Space Grotesk',monospace;font-size:11px;word-break:break-word;}
+.ic-more{color:var(--dim);}
+.cd-debug{background:#0e0b08;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px;}
+.dbg-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.dbg-head{font-size:11.5px;color:#A89685;font-family:'IBM Plex Sans Thai',sans-serif;}
+.dbg-actions{display:flex;gap:7px;}
+.dbg-btn{font-family:'IBM Plex Sans Thai',sans-serif;font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:7px;background:var(--gold);color:var(--onAccent);border:none;cursor:pointer;}
+.dbg-btn.ghost{background:transparent;color:#A89685;border:1px solid #3B2D23;font-weight:500;}
+.dbg-pre{margin:0;max-height:240px;overflow:auto;font-family:'Space Grotesk',monospace;font-size:11px;line-height:1.5;color:#F0E7DA;white-space:pre-wrap;word-break:break-word;user-select:all;-webkit-user-select:all;background:#000;padding:10px;border-radius:8px;}
+.cd-filters{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:flex-start;padding:15px;background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:16px;}
+.seg-wrap{display:flex;flex-direction:column;gap:7px;max-width:100%;min-width:0;}
+.seg-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);font-weight:600;font-family:'IBM Plex Sans Thai',sans-serif;}
+.seg{display:flex;flex-wrap:wrap;gap:6px;}
+.seg.scroll{flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding-bottom:3px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+.seg-btn{font-family:'IBM Plex Sans Thai',sans-serif;font-size:13px;padding:6px 13px;border-radius:999px;cursor:pointer;background:var(--panel2);color:var(--muted);border:1px solid var(--line);transition:all .15s;white-space:nowrap;flex:none;}
+.seg-btn:hover{color:var(--text);border-color:var(--goldDim);}
+.seg-btn.on{background:var(--gold);color:var(--onAccent);border-color:var(--gold);font-weight:600;}
+.reset{margin-left:auto;align-self:flex-end;font-family:'IBM Plex Sans Thai',sans-serif;font-size:12.5px;padding:7px 14px;border-radius:8px;background:transparent;color:var(--dim);border:1px dashed var(--line);cursor:pointer;opacity:0;pointer-events:none;transition:all .15s;}
+.reset.show{opacity:1;pointer-events:auto;color:var(--clay);border-color:var(--clay);}
+.reset.show:hover{background:var(--clay);color:var(--onAccent);}
+.cd-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:16px;}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 15px;}
+.kpi-l{font-size:11px;color:var(--muted);font-family:'IBM Plex Sans Thai',sans-serif;}
+.kpi-v{font-size:clamp(20px,5vw,26px);font-weight:700;letter-spacing:-.02em;margin:6px 0 2px;line-height:1;}
+.kpi-s{font-size:10px;color:var(--dim);font-family:'IBM Plex Sans Thai',sans-serif;}
+.cd-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px;margin-bottom:20px;}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px 17px;min-width:0;}
+.card.span2{grid-column:span 2;}
+.card-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:10px;}
+.card-h h3{margin:0;font-size:14.5px;font-weight:600;font-family:'IBM Plex Sans Thai',sans-serif;}
+.card-h span{font-size:11px;color:var(--dim);font-family:'IBM Plex Sans Thai',sans-serif;white-space:nowrap;}
+.donut-row{display:flex;align-items:center;gap:6px;}
+.donut-chart{width:50%;flex:none;}
+.legend{flex:1;display:flex;flex-direction:column;gap:11px;min-width:0;}
+.leg{display:flex;align-items:center;gap:9px;}
+.leg .dot{width:11px;height:11px;border-radius:3px;flex:none;}
+.leg-n{font-size:12px;color:var(--text);font-family:'IBM Plex Sans Thai',sans-serif;}
+.leg-v{font-size:11px;color:var(--muted);margin-top:1px;}
+.empty{height:150px;display:grid;place-items:center;color:var(--dim);font-size:13px;font-family:'IBM Plex Sans Thai',sans-serif;}
+.skel{position:relative;overflow:hidden;background:var(--panel2);}
+.skel::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,var(--shimmer),transparent);animation:shimmer 1.3s infinite;}
+@keyframes shimmer{100%{transform:translateX(100%);}}
+.skel-ring{width:118px;height:118px;border-radius:50%;-webkit-mask:radial-gradient(circle 36px at 50% 50%,transparent 98%,#000 100%);mask:radial-gradient(circle 36px at 50% 50%,transparent 98%,#000 100%);}
+.cd-analysis{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:clamp(16px,4vw,22px);}
+.an-head h2{margin:0;font-size:17px;font-weight:600;font-family:'IBM Plex Sans Thai',sans-serif;}
+.an-head p{margin:4px 0 17px;color:var(--muted);font-size:12px;font-family:'IBM Plex Sans Thai',sans-serif;}
+.an-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.rec{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:15px;position:relative;overflow:hidden;}
+.rec:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);opacity:.55;}
+.rec-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.rec-num{font-size:13px;font-weight:700;color:var(--dim);letter-spacing:.05em;}
+.rec-stat{font-size:12px;font-weight:600;font-family:'IBM Plex Sans Thai',sans-serif;}
+.rec h4{margin:0 0 6px;font-size:14px;font-weight:600;font-family:'IBM Plex Sans Thai',sans-serif;line-height:1.35;}
+.rec p{margin:0;font-size:12.5px;line-height:1.6;color:var(--muted);font-family:'IBM Plex Sans Thai',sans-serif;}
+.cd-foot{margin-top:16px;text-align:center;color:var(--dim);font-size:11px;font-family:'IBM Plex Sans Thai',sans-serif;}
+@media(max-width:880px){.cd-kpis{grid-template-columns:repeat(3,1fr);}.cd-grid{grid-template-columns:1fr;}.card.span2{grid-column:span 1;}.an-grid{grid-template-columns:1fr;}}
+@media(max-width:560px){
+  .cd-sync{flex-direction:column;align-items:stretch;}
+  .sync-right{justify-content:space-between;}
+  .sync-txt small{max-width:78vw;}
+  .cd-kpis{grid-template-columns:repeat(2,1fr);}
+  .cd-filters{flex-direction:column;align-items:stretch;gap:13px;}
+  .seg-wrap{width:100%;}
+  .seg.scroll{flex-wrap:wrap;overflow-x:visible;}
+  .reset{margin-left:0;align-self:stretch;text-align:center;}
+}
+@media(max-width:480px){
+  .donut-row{flex-direction:column;align-items:stretch;gap:6px;}
+  .donut-chart{width:100%;}
+  .legend{width:100%;flex-direction:row;flex-wrap:wrap;justify-content:center;gap:10px 20px;}
+  .card{padding:14px;}
+}
+@media(max-width:380px){.cd-kpis{grid-template-columns:1fr 1fr;}.kpi-v{font-size:19px;}}
+`;
+
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(CoffeeDashboard));
+
+</script>
+</body>
+</html>
