@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-<title>แดชบอร์ดยอดขายร้านกาแฟ</title>
+<title>แดชบอร์ดยอดขายร้านกาแฟ · Coffee Shop Sales Dashboard</title>
 <style>html,body{margin:0;background:#17120E;}#root{max-width:1100px;margin:0 auto;}</style>
-<link rel="icon" href="data:," />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/prop-types@15.8.1/prop-types.min.js"></script>
@@ -316,6 +316,9 @@ function CoffeeDashboard() {
 
   const [, setTick] = useState(0);
   useEffect(() => { const t = setInterval(() => setTick((x) => x + 1), 1000); return () => clearInterval(t); }, []);
+
+  // อัปเดตชื่อแท็บ + แอตทริบิวต์ lang ของหน้าให้ตรงกับภาษาที่เลือก (รองรับ TH/EN)
+  useEffect(() => { document.title = L.title; document.documentElement.lang = lang; }, [lang, L]);
 
   const f = { product: fProduct, type: fType, take: fTake, price: fPrice };
   const S = useMemo(() => summarize(rows, f), [rows, fProduct, fType, fTake, fPrice]);
