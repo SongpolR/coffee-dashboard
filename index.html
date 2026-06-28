@@ -5,10 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
 <title>แดชบอร์ดยอดขายร้านกาแฟ</title>
 <style>html,body{margin:0;background:#17120E;}#root{max-width:1100px;margin:0 auto;}</style>
-<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/recharts@2.12.7/umd/Recharts.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link rel="icon" href="data:," />
+<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prop-types@15.8.1/prop-types.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.26.4/babel.min.js"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -17,10 +19,8 @@ const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Cell, PieChart, Pie, Tooltip, LabelList } = Recharts;
 
 
-// ── แถวดิบที่ฝังไว้ (ดึงจากไฟล์ coffee_data) ──
-const SEED_ROWS = [{"cus":"a1","p":"เอสเพรสโซ","t":"hot","k":"for here","pr":50,"q":1},{"cus":"a1","p":"คาปูชิโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a2","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a2","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a3","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a4","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a4","p":"อเมริกาโน่","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a5","p":"อเมริกาโน่","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a6","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a6","p":"อเมริกาโน่","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a6","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a7","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a7","p":"ลาเต้","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a8","p":"อเมริกาโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a8","p":"ลาเต้","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a9","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a10","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":50,"q":1},{"cus":"a10","p":"มอคค่า","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a11","p":"คาปูชิโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a11","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a12","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a12","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a12","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a13","p":"ลาเต้","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a13","p":"มอคค่า","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a14","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a14","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a14","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a15","p":"มอคค่า","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a15","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a16","p":"คาปูชิโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a17","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a18","p":"ลาเต้","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a18","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a19","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a19","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a20","p":"มอคค่า","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a20","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a21","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a21","p":"คาปูชิโน่","t":"hot","k":"for here","pr":50,"q":1},{"cus":"a22","p":"คาปูชิโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a23","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a24","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a25","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a26","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a27","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a27","p":"ลาเต้","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a28","p":"มอคค่า","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a28","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a29","p":"มอคค่า","t":"hot","k":"for here","pr":70,"q":1},{"cus":"a29","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":50,"q":1},{"cus":"a29","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a30","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a31","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a31","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a31","p":"มอคค่า","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a31","p":"คาปูชิโน่","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a32","p":"คาปูชิโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a33","p":"คาปูชิโน่","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a33","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a33","p":"มอคค่า","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a34","p":"มอคค่า","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a34","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a35","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a35","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a36","p":"คาปูชิโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a36","p":"มอคค่า","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a36","p":"ลาเต้","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a37","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a37","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a37","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a38","p":"อเมริกาโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a38","p":"ลาเต้","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a39","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a39","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a40","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a40","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a41","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a41","p":"ลาเต้","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a42","p":"มอคค่า","t":"hot","k":"for here","pr":50,"q":1},{"cus":"a42","p":"ลาเต้","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a43","p":"ลาเต้","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a43","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a44","p":"อเมริกาโน่","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a44","p":"ลาเต้","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a45","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a46","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a47","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a47","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a48","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a48","p":"คาปูชิโน่","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a49","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a50","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a50","p":"คาปูชิโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a51","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a51","p":"มอคค่า","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a51","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a52","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a52","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a53","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a53","p":"ลาเต้","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a54","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a54","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a55","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a55","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a56","p":"ลาเต้","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a56","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a57","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a58","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a58","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a59","p":"อเมริกาโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a59","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a60","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a60","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a60","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a61","p":"มอคค่า","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a61","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a62","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a62","p":"มอคค่า","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a63","p":"อเมริกาโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a63","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a64","p":"อเมริกาโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a65","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a65","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a65","p":"คาปูชิโน่","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a66","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a66","p":"ลาเต้","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a67","p":"มอคค่า","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a67","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a67","p":"ลาเต้","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a68","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a68","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a69","p":"มอคค่า","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a69","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a70","p":"คาปูชิโน่","t":"hot","k":"for here","pr":50,"q":1},{"cus":"a70","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a70","p":"อเมริกาโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a71","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a71","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a72","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a72","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a73","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a73","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a73","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a74","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a74","p":"ลาเต้","t":"hot","k":"for here","pr":70,"q":1},{"cus":"a74","p":"ลาเต้","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a75","p":"คาปูชิโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a75","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a76","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a76","p":"มอคค่า","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a76","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a77","p":"มอคค่า","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a77","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a78","p":"ลาเต้","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a78","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a79","p":"ลาเต้","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a79","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a79","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a80","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a80","p":"คาปูชิโน่","t":"hot","k":"for here","pr":70,"q":1},{"cus":"a80","p":"ลาเต้","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a80","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a81","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a81","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a81","p":"คาปูชิโน่","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a82","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a82","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a83","p":"อเมริกาโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a83","p":"คาปูชิโน่","t":"hot","k":"for here","pr":50,"q":1},{"cus":"a84","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a85","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a86","p":"อเมริกาโน่","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a87","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a87","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a88","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a88","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a89","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a89","p":"อเมริกาโน่","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a90","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a91","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a92","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a93","p":"มอคค่า","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a94","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a95","p":"คาปูชิโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a96","p":"เอสเพรสโซ","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a96","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":50,"q":1},{"cus":"a97","p":"ลาเต้","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a97","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a98","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a99","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a99","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a100","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a101","p":"มอคค่า","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a102","p":"มอคค่า","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a102","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a102","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a103","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a103","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a104","p":"คาปูชิโน่","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a104","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a105","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a105","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a105","p":"มอคค่า","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a106","p":"ลาเต้","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a106","p":"คาปูชิโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a107","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a107","p":"อเมริกาโน่","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a107","p":"มอคค่า","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a107","p":"ลาเต้","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a108","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a108","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a109","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a109","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a109","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a110","p":"อเมริกาโน่","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a111","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a112","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a113","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a113","p":"คาปูชิโน่","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a114","p":"มอคค่า","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a115","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a116","p":"มอคค่า","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a116","p":"ลาเต้","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a117","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a118","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a119","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a120","p":"ลาเต้","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a121","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a122","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a122","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a123","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a123","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a124","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a124","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a124","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a125","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a126","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a126","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a126","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a127","p":"คาปูชิโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a127","p":"อเมริกาโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a128","p":"อเมริกาโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a128","p":"อเมริกาโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a129","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a129","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a130","p":"เอสเพรสโซ","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a130","p":"มอคค่า","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a131","p":"คาปูชิโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a131","p":"อเมริกาโน่","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a132","p":"คาปูชิโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a133","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a133","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a133","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a134","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a134","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a135","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a136","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a137","p":"อเมริกาโน่","t":"ice","k":"for here","pr":50,"q":1},{"cus":"a138","p":"มอคค่า","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a138","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a139","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a139","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a140","p":"อเมริกาโน่","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a140","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a141","p":"มอคค่า","t":"hot","k":"to go","pr":70,"q":1},{"cus":"a141","p":"อเมริกาโน่","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a142","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a143","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a144","p":"อเมริกาโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a144","p":"ลาเต้","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a145","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a145","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a146","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a147","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a148","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a149","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a149","p":"ลาเต้","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a150","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a150","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a151","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a151","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a152","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a152","p":"คาปูชิโน่","t":"ice","k":"for here","pr":70,"q":1},{"cus":"a152","p":"อเมริกาโน่","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a153","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a154","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a154","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a154","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a155","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a156","p":"อเมริกาโน่","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a156","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a157","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a158","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a158","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a158","p":"ลาเต้","t":"hot","k":"to go","pr":50,"q":1},{"cus":"a159","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a159","p":"ลาเต้","t":"ice","k":"for here","pr":50,"q":1},{"cus":"a160","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a160","p":"คาปูชิโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a160","p":"มอคค่า","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a160","p":"คาปูชิโน่","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a161","p":"เอสเพรสโซ","t":"ice","k":"for here","pr":50,"q":1},{"cus":"a161","p":"อเมริกาโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a162","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a162","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a162","p":"มอคค่า","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a163","p":"เอสเพรสโซ","t":"hot","k":"for here","pr":60,"q":1},{"cus":"a163","p":"คาปูชิโน่","t":"ice","k":"for here","pr":60,"q":1},{"cus":"a164","p":"คาปูชิโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a164","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a165","p":"ลาเต้","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a166","p":"อเมริกาโน่","t":"hot","k":"to go","pr":60,"q":1},{"cus":"a167","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a168","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":50,"q":1},{"cus":"a169","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a169","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a170","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a170","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a170","p":"เอสเพรสโซ","t":"ice","k":"to go","pr":70,"q":1},{"cus":"a171","p":"ลาเต้","t":"ice","k":"to go","pr":60,"q":1},{"cus":"a169","p":"อเมริกาโน่","t":"ice","k":"to go","pr":60,"q":1}];
-
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSXdt9XJ0G4XIJBK_7fDkBHGL7E7Wt6qeJ4-nHt57x6J5_ozlaNMWdAj8zB7-thbEXLA1Dkh8ZgFllS/pub?gid=756749038&single=true&output=csv";
+// วาง URL ของ Apps Script Web App (.../exec) ที่ deploy แล้วลงตรงนี้ (ดู apps-script/Code.gs)
+const API_URL = "https://script.google.com/macros/s/AKfycbzs4xE2NJOVMmrWLTyYoicWEbwJWbQwc7ZmDb511diTQzTpU7EuW0Oxr634CpkOKD-i/exec";
 
 const PRODUCTS = ["เอสเพรสโซ", "อเมริกาโน่", "ลาเต้", "คาปูชิโน่", "มอคค่า"];
 const PRODUCT_EN = { "เอสเพรสโซ": "Espresso", "อเมริกาโน่": "Americano", "ลาเต้": "Latte", "คาปูชิโน่": "Cappuccino", "มอคค่า": "Mocha" };
@@ -51,9 +51,9 @@ const STR = {
     subtitle: (r, c) => <>ไฟล์ <code>coffee_data</code> · Google Sheet · {r} รายการ · {c} ลูกค้า</>,
     syncing: "กำลังซิงค์…", syncFail: "ซิงค์ไม่สำเร็จ", syncOk: "ซิงค์กับ Google Sheet แล้ว", syncIdle: "ข้อมูลฝังในแอป (ยังไม่ได้ซิงค์)",
     updated: (a) => `อัปเดตล่าสุด ${a}`, idleHint: "กดซิงค์เพื่อดึงข้อมูลสดจากชีต", rowsWord: "แถว",
-    err: { parse: "อ่านข้อมูล CSV ไม่สำเร็จ — รูปแบบไม่ตรง (เปิดดู debug)", net: "เชื่อมต่อชีตไม่ได้ — ตรวจว่า Publish to web เปิดอยู่ แล้วลองใหม่" },
+    err: { parse: "อ่านข้อมูลไม่สำเร็จ — รูปแบบ JSON ไม่ตรง (เปิดดู debug)", net: "เชื่อมต่อ API ไม่ได้ — ตรวจว่า Apps Script deploy เป็น Web app (Anyone) แล้วลองใหม่" },
     agoSec: (n) => `${n} วินาทีที่แล้ว`, agoMin: (n) => `${n} นาทีที่แล้ว`,
-    syncNow: "ซิงค์เดี๋ยวนี้", syncingBtn: "กำลังซิงค์", autoLabel: "อัปเดตอัตโนมัติ · 1 นาที",
+    syncNow: "ซิงค์เดี๋ยวนี้", syncingBtn: "กำลังซิงค์", autoLabel: "อัปเดตอัตโนมัติ · 15 วินาที",
     fMenu: "เมนู", fTemp: "อุณหภูมิ", fServe: "รูปแบบ", fPrice: "ราคา",
     all: "ทั้งหมด", hot: "ร้อน", iced: "เย็น", dinein: "ทานที่ร้าน", takeaway: "ซื้อกลับ",
     clear: "ล้างตัวกรอง",
@@ -65,7 +65,7 @@ const STR = {
     legIce: "เย็น (ice)", legHot: "ร้อน (hot)", legTakeaway: "ซื้อกลับ (to go)", legDinein: "ทานที่ร้าน (for here)",
     empty: "ไม่มีข้อมูลตรงกับตัวกรอง",
     anaHead: "ผลการดำเนินงาน & ข้อเสนอแนะ", anaSub: "วิเคราะห์จากภาพรวมทั้งร้าน — ไม่ขึ้นกับตัวกรองด้านบน",
-    foot: "ดึง CSV สาธารณะจาก Google Sheets (Publish to web) แล้วรวมยอดในแอป · ทุกคนที่เปิดเห็นข้อมูลสด · อัปเดตอัตโนมัติทุก 60 วินาทีเมื่อเปิดใช้งาน",
+    foot: "ดึงข้อมูลสดจาก Google Sheets ผ่าน Apps Script Web App แล้วรวมยอดในแอป · ทุกคนที่เปิดเห็นข้อมูลสด · อัปเดตอัตโนมัติทุก 15 วินาทีเมื่อเปิดใช้งาน",
     bahtSuffix: " บาท", cupSuffix: " แก้ว",
     dbgHead: (n) => `log จาก connector (${n} ตัวอักษร) — คัดลอกส่งมาให้ผมเพื่อปรับ parser`,
     copy: "คัดลอก log", copied: "คัดลอกแล้ว ✓", hide: "ซ่อน",
@@ -82,9 +82,9 @@ const STR = {
     subtitle: (r, c) => <><code>coffee_data</code> · Google Sheet · {r} orders · {c} customers</>,
     syncing: "Syncing…", syncFail: "Sync failed", syncOk: "Synced with Google Sheet", syncIdle: "Embedded data (not synced yet)",
     updated: (a) => `Updated ${a}`, idleHint: "Press sync to pull live data from the sheet", rowsWord: "rows",
-    err: { parse: "Couldn't read the CSV — unexpected format (see debug)", net: "Can't reach the sheet — check that Publish to web is on, then retry" },
+    err: { parse: "Couldn't read the data — unexpected JSON format (see debug)", net: "Can't reach the API — check the Apps Script is deployed as a Web app (Anyone), then retry" },
     agoSec: (n) => `${n}s ago`, agoMin: (n) => `${n}m ago`,
-    syncNow: "Sync now", syncingBtn: "Syncing", autoLabel: "Auto refresh · 1 min",
+    syncNow: "Sync now", syncingBtn: "Syncing", autoLabel: "Auto refresh · 15 sec",
     fMenu: "Menu", fTemp: "Temp", fServe: "Service", fPrice: "Price",
     all: "All", hot: "Hot", iced: "Iced", dinein: "Dine-in", takeaway: "Takeaway",
     clear: "Clear filters",
@@ -96,7 +96,7 @@ const STR = {
     legIce: "Iced", legHot: "Hot", legTakeaway: "Takeaway", legDinein: "Dine-in",
     empty: "No data matches the filters",
     anaHead: "Performance & Recommendations", anaSub: "Based on the whole store — independent of the filters above",
-    foot: "Reads the public Google Sheets CSV (Publish to web) and aggregates in-app · Everyone sees live data · Auto-refresh every 60s when on",
+    foot: "Reads live Google Sheets data via an Apps Script Web App and aggregates in-app · Everyone sees live data · Auto-refresh every 15s when on",
     bahtSuffix: " THB", cupSuffix: " cups",
     dbgHead: (n) => `Connector log (${n} chars) — copy and send it to me to tune the parser`,
     copy: "Copy log", copied: "Copied ✓", hide: "Hide",
@@ -195,91 +195,31 @@ function buildRecs(rows, lang) {
 
 const baht = (n) => "฿" + Math.round(n).toLocaleString("en-US");
 
-// ── parser: คืน {rows, issues}
-// rows = แถวที่ถูกต้อง · issues = แถวที่ "ดูเหมือนข้อมูล" แต่ค่าผิด (ไม่นับ แต่แจ้งเตือน)
-// แยกแถวข้อมูลออกจากหัวตาราง/เส้นคั่น/ตารางสรุป ด้วย: คอลัมน์แรกเป็นเลขลำดับ + คอลัมน์ที่สองเป็นรหัสลูกค้า (ขึ้นต้นด้วยตัวอักษร)
-function parseSheet(raw) {
-  const rows = [], issues = [];
-  let found = 0, maxNo = 0;
-  for (let ln of String(raw).split(/\\r\\n|\\n|\r?\n/)) {
-    const isMd = ln.indexOf("|") >= 0;
-    if (!isMd && ln.indexOf(",") < 0) continue;
-    let cells = (isMd ? ln.split("|") : ln.split(",")).map((c) => c.trim());
-    if (isMd) { // ตัดเฉพาะช่องว่างขอบของ markdown (| ... |) ไม่แตะช่อง No. ที่เว้นว่าง
-      if (cells.length && cells[0] === "") cells.shift();
-      if (cells.length && cells[cells.length - 1] === "") cells.pop();
-    }
-    if (cells.length < 5) continue;
-
-    // ยึดคอลัมน์ Product/Type/take จากเนื้อหา แล้วหาคอลัมน์อื่นจากตำแหน่งสัมพัทธ์
-    // ลำดับมาตรฐาน: [No, Cus, Product, Type, take, Order, Price]
-    const pi = cells.findIndex((c) => PRODUCTS.includes(c));
-    const ti = cells.findIndex((c) => TYPES.includes(c));
-    const ki = cells.findIndex((c) => TAKES.includes(c));
-    if (pi < 0 && ti < 0 && ki < 0) continue; // หัวตาราง/เส้นคั่น/ตารางสรุปปี → ข้าม
-    const base = pi >= 0 ? pi : (ti >= 0 ? ti - 1 : ki - 2); // index ของคอลัมน์ Product
-    if (base < 0) continue;
-
-    found++;
-    const noNum = parseInt(cells[0], 10); if (!isNaN(noNum) && noNum > maxNo) maxNo = noNum;
-    const snippet = ln.replace(/\s+/g, " ").trim().slice(0, 120);
-
-    const cus = base - 1 >= 0 ? cells[base - 1] : "?";
-    const product = cells[base], type = cells[base + 1], take = cells[base + 2];
-    const order = cells[base + 3], price = cells[base + 4];
-    if (price === undefined || type === undefined || take === undefined) { issues.push({ raw: snippet, code: "incomplete" }); continue; }
-    if (!PRODUCTS.includes(product)) { issues.push({ raw: snippet, code: "product", val: product }); continue; }
-    if (!TYPES.includes(type)) { issues.push({ raw: snippet, code: "type", val: type }); continue; }
-    if (!TAKES.includes(take)) { issues.push({ raw: snippet, code: "service", val: take }); continue; }
-    const pr = parseInt(price, 10);
-    if (isNaN(pr)) { issues.push({ raw: snippet, code: "price", val: price }); continue; }
-    const q = parseInt(order, 10) || 1;
-    rows.push({ cus: cus || "?", p: product, t: type, k: take, pr, q });
-  }
-  return { rows, issues, found, maxNo };
-}
-// เก็บทุก string; ถ้าเป็น JSON ให้ parse เพื่อถอด \n ที่ escape แล้วใช้เฉพาะตัวที่ถอด (กันนับซ้ำ)
-function collectText(node, acc, depth) {
-  depth = depth || 0;
-  if (node == null || depth > 6) return;
-  if (typeof node === "string") {
-    const t = node.trim();
-    if (((t[0] === "{" && t[t.length - 1] === "}") || (t[0] === "[" && t[t.length - 1] === "]")) && t.length > 12) {
-      try { collectText(JSON.parse(node), acc, depth + 1); return; } catch (_) {}
-    }
-    acc.push(node);
-    return;
-  }
-  if (Array.isArray(node)) { for (const x of node) collectText(x, acc, depth + 1); return; }
-  if (typeof node === "object") { for (const key in node) collectText(node[key], acc, depth + 1); }
-}
-function b64decode(s) {
-  try {
-    const clean = s.replace(/\s+/g, "");
-    if (clean.length < 80 || !/^[A-Za-z0-9+/=]+$/.test(clean)) return "";
-    const bin = atob(clean);
-    return new TextDecoder("utf-8").decode(Uint8Array.from(bin, (ch) => ch.charCodeAt(0)));
-  } catch (_) { return ""; }
-}
-
 async function fetchLiveData() {
-  // ดึง CSV สาธารณะจาก Google Sheets (Publish to web) ตรง ๆ — ทุกคนเข้าถึงได้ ไม่ต้องล็อกอิน
-  const url = CSV_URL + (CSV_URL.indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now(); // กันแคชฝั่ง browser
+  // ดึง JSON สดจาก Google Apps Script Web App — อ่านชีตแบบเรียลไทม์ ไม่ติดแคช Publish-to-web
+  const url = API_URL + (API_URL.indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now(); // กันแคชฝั่ง browser
   let res;
   try {
-    res = await fetch(url, { cache: "no-store" });
+    res = await fetch(url, { cache: "no-store", redirect: "follow" });
   } catch (e) {
     throw new Error("NETWORK");
   }
   if (!res.ok) throw new Error("HTTP " + res.status);
-  const text = await res.text();
-  const parsed = parseSheet(text);
-  if (!parsed.rows.length) {
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
     const err = new Error("PARSE_FAIL");
-    err.sample = (text || "(empty response)").slice(0, 4000);
+    err.sample = "(ตอบกลับไม่ใช่ JSON — ตรวจว่า API_URL ชี้ไปที่ /exec ของ Apps Script)";
     throw err;
   }
-  return parsed;
+  const rows = Array.isArray(data.rows) ? data.rows : [];
+  if (!rows.length) {
+    const err = new Error("PARSE_FAIL");
+    err.sample = JSON.stringify(data).slice(0, 4000);
+    throw err;
+  }
+  return { rows, issues: data.issues || [], found: data.found || rows.length, maxNo: data.maxNo || 0 };
 }
 
 function summarize(rows, f) {
@@ -309,7 +249,7 @@ function CoffeeDashboard() {
   const L = STR[lang];
   const pname = (p) => (lang === "en" ? (PRODUCT_EN[p] || p) : p);
 
-  const [rows, setRows] = useState(SEED_ROWS);
+  const [rows, setRows] = useState([]);
   const [synced, setSynced] = useState(false);
   const [lastSync, setLastSync] = useState(null);
   const [status, setStatus] = useState("idle");
@@ -370,7 +310,7 @@ function CoffeeDashboard() {
   }, [sync]);
 
   useEffect(() => {
-    if (auto) { sync(); timer.current = setInterval(sync, 60000); }
+    if (auto) { sync(); timer.current = setInterval(sync, 15000); }
     return () => { if (timer.current) clearInterval(timer.current); };
   }, [auto, sync]);
 
