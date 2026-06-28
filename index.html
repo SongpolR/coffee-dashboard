@@ -54,7 +54,6 @@ const STR = {
     syncing: "กำลังซิงค์…", syncFail: "ซิงค์ไม่สำเร็จ", syncOk: "ซิงค์กับ Google Sheet แล้ว", syncIdle: "ข้อมูลฝังในแอป (ยังไม่ได้ซิงค์)",
     updated: (a) => `อัปเดตล่าสุด ${a}`, idleHint: "กดซิงค์เพื่อดึงข้อมูลสดจากชีต", rowsWord: "แถว",
     err: { parse: "อ่านข้อมูลไม่สำเร็จ — รูปแบบ JSON ไม่ตรง (เปิดดู debug)", net: "เชื่อมต่อ API ไม่ได้ — ตรวจว่า Apps Script deploy เป็น Web app (Anyone) แล้วลองใหม่" },
-    agoSec: (n) => `${n} วินาทีที่แล้ว`, agoMin: (n) => `${n} นาทีที่แล้ว`,
     syncNow: "ซิงค์เดี๋ยวนี้", syncingBtn: "กำลังซิงค์", autoLabel: "อัปเดตอัตโนมัติ · 15 วินาที",
     fMenu: "เมนู", fTemp: "อุณหภูมิ", fServe: "รูปแบบ", fPrice: "ราคา",
     all: "ทั้งหมด", hot: "ร้อน", iced: "เย็น", dinein: "ทานที่ร้าน", takeaway: "ซื้อกลับ",
@@ -85,7 +84,6 @@ const STR = {
     syncing: "Syncing…", syncFail: "Sync failed", syncOk: "Synced with Google Sheet", syncIdle: "Embedded data (not synced yet)",
     updated: (a) => `Updated ${a}`, idleHint: "Press sync to pull live data from the sheet", rowsWord: "rows",
     err: { parse: "Couldn't read the data — unexpected JSON format (see debug)", net: "Can't reach the API — check the Apps Script is deployed as a Web app (Anyone), then retry" },
-    agoSec: (n) => `${n}s ago`, agoMin: (n) => `${n}m ago`,
     syncNow: "Sync now", syncingBtn: "Syncing", autoLabel: "Auto refresh · 15 sec",
     fMenu: "Menu", fTemp: "Temp", fServe: "Service", fPrice: "Price",
     all: "All", hot: "Hot", iced: "Iced", dinein: "Dine-in", takeaway: "Takeaway",
@@ -270,6 +268,8 @@ function CoffeeDashboard() {
   const [issuesHidden, setIssuesHidden] = useState(false);
   const [issuesOpen, setIssuesOpen] = useState(false);
   const loading = status === "syncing";
+  // โครงร่าง skeleton + shimmer แสดงเฉพาะตอนโหลดครั้งแรก (ยังไม่มีข้อมูล) — การซิงค์ครั้งถัดไปจะโชว์สถานะที่ปุ่มแทน
+  const initialLoading = loading && rows.length === 0;
 
   const [fProduct, setFProduct] = useState(null);
   const [fType, setFType] = useState(null);
@@ -320,9 +320,6 @@ function CoffeeDashboard() {
     return () => { if (timer.current) clearInterval(timer.current); };
   }, [auto, sync]);
 
-  const [, setTick] = useState(0);
-  useEffect(() => { const t = setInterval(() => setTick((x) => x + 1), 1000); return () => clearInterval(t); }, []);
-
   // อัปเดตชื่อแท็บ + แอตทริบิวต์ lang ของหน้าให้ตรงกับภาษาที่เลือก (รองรับ TH/EN)
   useEffect(() => { document.title = L.title; document.documentElement.lang = lang; }, [lang, L]);
 
@@ -350,8 +347,11 @@ function CoffeeDashboard() {
   const reset = () => { setFProduct(null); setFType(null); setFTake(null); setFPrice(null); };
   const active = [fProduct, fType, fTake, fPrice].filter((x) => x !== null).length;
 
-  const ago = lastSync ? Math.floor((Date.now() - lastSync.getTime()) / 1000) : null;
-  const agoTxt = ago === null ? "" : ago < 60 ? L.agoSec(ago) : L.agoMin(Math.floor(ago / 60));
+  // แสดงเป็นวันที่-เวลาที่รีเฟรชจริง แทนข้อความ "กี่วินาที/นาทีที่แล้ว"
+  const syncTimeTxt = lastSync
+    ? lastSync.toLocaleString(lang === "th" ? "th-TH" : "en-GB",
+        { calendar: "gregory", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false })
+    : "";
   const colorOf = (key) => (key === "text" ? T.text : T[key]);
   const reasonText = (it) => {
     const m = { product: L.rProduct, type: L.rType, service: L.rService, price: L.rPrice, incomplete: L.rIncomplete };
@@ -400,7 +400,7 @@ function CoffeeDashboard() {
             <strong>{loading ? L.syncing : status === "error" ? L.syncFail : synced ? L.syncOk : L.syncIdle}</strong>
             <small className={status === "error" ? "err" : ""}>
               {status === "error" ? (errCode === "raw" ? errRaw : (L.err[errCode] || L.idleHint))
-                : lastSync ? `${L.updated(agoTxt)} · ${rows.length} ${L.rowsWord}`
+                : lastSync ? `${L.updated(syncTimeTxt)} · ${rows.length} ${L.rowsWord}`
                 : L.idleHint}
             </small>
           </div>
@@ -490,17 +490,17 @@ function CoffeeDashboard() {
       </section>
 
       <section className="cd-kpis">
-        <Kpi loading={loading} l={L.kSales} v={baht(S.sales)} s={L.salesSub(((S.sales / totalSales) * 100 || 0).toFixed(0))} c={T.gold} />
-        <Kpi loading={loading} l={L.kCups} v={S.cups.toLocaleString()} s={L.cupsSub} c={T.text} />
-        <Kpi loading={loading} l={L.kCusts} v={S.custCount.toLocaleString()} s={L.custsSub} c={T.text} />
-        <Kpi loading={loading} l={L.kAvg} v={baht(avg)} s={L.avgSub} c={T.jade} />
-        <Kpi loading={loading} l={L.kBasket} v={baht(basket)} s={L.basketSub} c={T.clay} />
+        <Kpi loading={initialLoading} l={L.kSales} v={baht(S.sales)} s={L.salesSub(((S.sales / totalSales) * 100 || 0).toFixed(0))} c={T.gold} />
+        <Kpi loading={initialLoading} l={L.kCups} v={S.cups.toLocaleString()} s={L.cupsSub} c={T.text} />
+        <Kpi loading={initialLoading} l={L.kCusts} v={S.custCount.toLocaleString()} s={L.custsSub} c={T.text} />
+        <Kpi loading={initialLoading} l={L.kAvg} v={baht(avg)} s={L.avgSub} c={T.jade} />
+        <Kpi loading={initialLoading} l={L.kBasket} v={baht(basket)} s={L.basketSub} c={T.clay} />
       </section>
 
       <section className="cd-grid">
         <div className="card span2">
           <div className="card-h"><h3>{L.cSalesByMenu}</h3><span>{L.cHiLo}</span></div>
-          {loading ? <Shimmer h={byProduct.length ? Math.max(150, byProduct.length * 44) : 200} />
+          {initialLoading ? <Shimmer h={byProduct.length ? Math.max(150, byProduct.length * 44) : 200} />
             : byProduct.length ? (
             <ResponsiveContainer width="100%" height={Math.max(150, byProduct.length * 44)}>
               <BarChart data={byProduct} layout="vertical" margin={{ left: 4, right: 56, top: 4, bottom: 4 }}>
@@ -518,16 +518,16 @@ function CoffeeDashboard() {
 
         <div className="card">
           <div className="card-h"><h3>{L.cHotIce}</h3><span>{L.cShare}</span></div>
-          {loading ? <DonutSkeleton /> : <Donut data={byType} T={T} L={L} />}
+          {initialLoading ? <DonutSkeleton /> : <Donut data={byType} T={T} L={L} />}
         </div>
         <div className="card">
           <div className="card-h"><h3>{L.cServe}</h3><span>{L.cShare}</span></div>
-          {loading ? <DonutSkeleton /> : <Donut data={byTake} T={T} L={L} />}
+          {initialLoading ? <DonutSkeleton /> : <Donut data={byTake} T={T} L={L} />}
         </div>
 
         <div className="card span2">
           <div className="card-h"><h3>{L.cPriceDist}</h3><span>{L.cCups}</span></div>
-          {loading ? <Shimmer h={170} />
+          {initialLoading ? <Shimmer h={170} />
             : S.cups ? (
             <ResponsiveContainer width="100%" height={170}>
               <BarChart data={byPrice} margin={{ left: -20, right: 8, top: 12, bottom: 0 }}>
@@ -550,7 +550,7 @@ function CoffeeDashboard() {
           <p>{L.anaSub}</p>
         </div>
         <div className="an-grid">
-          {loading
+          {initialLoading
             ? Array.from({ length: recs.length || 6 }).map((_, i) => <RecSkeleton key={i} />)
             : recs.map((r, i) => (
               <div className="rec" key={i}>
