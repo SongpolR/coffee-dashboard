@@ -21,6 +21,8 @@ const { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Cell, PieChart, Pie, T
 
 // วาง URL ของ Apps Script Web App (.../exec) ที่ deploy แล้วลงตรงนี้ (ดู apps-script/Code.gs)
 const API_URL = "https://script.google.com/macros/s/AKfycbzs4xE2NJOVMmrWLTyYoicWEbwJWbQwc7ZmDb511diTQzTpU7EuW0Oxr634CpkOKD-i/exec";
+// ลิงก์เปิด Google Sheet ต้นทาง (ปุ่มบนหัวแดชบอร์ด)
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/1vTRRy_yjZgVq1dW9R2ya2pK4moTqzb0xCE4bYZRyp04/edit?usp=sharing";
 
 const PRODUCTS = ["เอสเพรสโซ", "อเมริกาโน่", "ลาเต้", "คาปูชิโน่", "มอคค่า"];
 const PRODUCT_EN = { "เอสเพรสโซ": "Espresso", "อเมริกาโน่": "Americano", "ลาเต้": "Latte", "คาปูชิโน่": "Cappuccino", "มอคค่า": "Mocha" };
@@ -69,7 +71,7 @@ const STR = {
     bahtSuffix: " บาท", cupSuffix: " แก้ว",
     dbgHead: (n) => `log จาก connector (${n} ตัวอักษร) — คัดลอกส่งมาให้ผมเพื่อปรับ parser`,
     copy: "คัดลอก log", copied: "คัดลอกแล้ว ✓", hide: "ซ่อน",
-    themeTip: "สลับธีมมืด/สว่าง", langTip: "เปลี่ยนภาษา",
+    themeTip: "สลับธีมมืด/สว่าง", langTip: "เปลี่ยนภาษา", sheetTip: "เปิด Google Sheet", sheetBtn: "เปิดชีต",
     invTitle: (n) => `พบ ${n} แถวที่อาจไม่ถูกต้อง และถูกข้ามไป`,
     invSub: "แถวเหล่านี้ไม่ถูกนำมาคำนวณ — ตรวจสอบและแก้ไขในชีต",
     invShow: "ดูรายละเอียด", invHide: "ซ่อนรายละเอียด", invMore: (n) => `และอีก ${n} แถว`,
@@ -100,7 +102,7 @@ const STR = {
     bahtSuffix: " THB", cupSuffix: " cups",
     dbgHead: (n) => `Connector log (${n} chars) — copy and send it to me to tune the parser`,
     copy: "Copy log", copied: "Copied ✓", hide: "Hide",
-    themeTip: "Toggle dark/light", langTip: "Change language",
+    themeTip: "Toggle dark/light", langTip: "Change language", sheetTip: "Open Google Sheet", sheetBtn: "Open Sheet",
     invTitle: (n) => `${n} row${n > 1 ? "s" : ""} look invalid and were skipped`,
     invSub: "These rows aren't counted — review and fix them in the sheet.",
     invShow: "Show details", invHide: "Hide details", invMore: (n) => `and ${n} more`,
@@ -384,6 +386,10 @@ function CoffeeDashboard() {
             <button className={lang === "th" ? "on" : ""} onClick={() => setLang("th")}>ไทย</button>
             <button className={lang === "en" ? "on" : ""} onClick={() => setLang("en")}>EN</button>
           </div>
+          <a className="sheet-btn" href={SHEET_URL} target="_blank" rel="noopener noreferrer" title={L.sheetTip}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5" stroke="currentColor" strokeWidth="1.7"/><path d="M3.5 9h17M9 9v11" stroke="currentColor" strokeWidth="1.7"/></svg>
+            <span>{L.sheetBtn}</span>
+          </a>
         </div>
       </header>
 
@@ -677,6 +683,8 @@ const CSS = `
 .cd-toggles{display:flex;align-items:center;gap:8px;flex:none;}
 .icon-btn{width:34px;height:34px;display:grid;place-items:center;border-radius:9px;background:var(--panel2);border:1px solid var(--line);color:var(--text);cursor:pointer;transition:all .15s;}
 .icon-btn:hover{border-color:var(--gold);color:var(--gold);}
+.sheet-btn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:9px;background:var(--panel2);border:1px solid var(--line);color:var(--text);font-family:'IBM Plex Sans Thai',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap;transition:all .15s;}
+.sheet-btn:hover{border-color:var(--gold);color:var(--gold);}
 .lang-pill{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;}
 .lang-pill button{font-family:'IBM Plex Sans Thai',sans-serif;font-size:12px;font-weight:600;padding:7px 11px;background:var(--panel2);color:var(--muted);border:none;cursor:pointer;transition:all .15s;}
 .lang-pill button.on{background:var(--gold);color:var(--onAccent);}
