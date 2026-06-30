@@ -5,6 +5,10 @@
     "signal": {
       ".read": true,
       ".write": false
+    },
+    "aiRecs": {
+      ".read": true,
+      ".write": false
     }
   }
 }

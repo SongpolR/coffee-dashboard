@@ -6,6 +6,10 @@ const { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Cell, PieChart, Pie, T
 const API_URL = (window.APP_CONFIG && window.APP_CONFIG.apiUrl) || "";
 // ลิงก์เปิด Google Sheet ต้นทาง (ปุ่มบนหัวแดชบอร์ด)
 const SHEET_URL = (window.APP_CONFIG && window.APP_CONFIG.sheetUrl) || "";
+// URL ของ Cloud Function สำหรับ "AI Recommendation" (ว่าง = ซ่อนการ์ดนี้)
+const AI_FN_URL = (window.APP_CONFIG && window.APP_CONFIG.aiFnUrl) || "";
+// จำกัดอัตราฝั่งหน้าเว็บ: หน่วงเวลา 3 นาทีระหว่างการสร้างแต่ละครั้ง
+const AI_COOLDOWN_S = 180;
 
 const PRODUCTS = ["เอสเพรสโซ", "อเมริกาโน่", "ลาเต้", "คาปูชิโน่", "มอคค่า"];
 const PRODUCT_EN = { "เอสเพรสโซ": "Espresso", "อเมริกาโน่": "Americano", "ลาเต้": "Latte", "คาปูชิโน่": "Cappuccino", "มอคค่า": "Mocha" };
@@ -45,10 +49,20 @@ const STR = {
     salesSub: (p) => `${p}% ของยอดทั้งร้าน`, cupsSub: "แก้วที่ขายได้", custsSub: "คนที่ไม่ซ้ำ", avgSub: "ต่อแก้ว", basketSub: "ต่อบิล",
     cSalesByMenu: "ยอดขายตามเมนู", cHiLo: "เรียงจากมากไปน้อย",
     cHotIce: "ร้อน vs เย็น", cShare: "สัดส่วนยอดขาย",
-    cServe: "ทานที่ร้าน vs ซื้อกลับ", cPriceDist: "การกระจายตามระดับราคา", cCups: "จำนวนแก้ว",
+    cServe: "ทานที่ร้าน vs ซื้อกลับ", cPriceDist: "การกระจายตามระดับราคา", cCups: "จำนวนแก้ว", cPriceX: "ราคาต่อแก้ว",
     legIce: "เย็น (ice)", legHot: "ร้อน (hot)", legTakeaway: "ซื้อกลับ (to go)", legDinein: "ทานที่ร้าน (for here)",
     empty: "ไม่มีข้อมูลตรงกับตัวกรอง",
     anaHead: "ผลการดำเนินงาน & ข้อเสนอแนะ", anaSub: "วิเคราะห์จากภาพรวมทั้งร้าน — ไม่ขึ้นกับตัวกรองด้านบน",
+    ai: {
+      head: "ข้อเสนอแนะจาก AI", sub: "สร้างใหม่จากข้อมูลล่าสุด",
+      idle: "กดเพื่อให้ AI สรุปคำแนะนำจากข้อมูลปัจจุบัน",
+      generate: "สร้างคำแนะนำ", regenerate: "สร้างใหม่", loading: "กำลังวิเคราะห์ข้อมูลปัจจุบัน…",
+      asOf: (t) => `สร้างเมื่อ ${t}`, cached: "จากแคช",
+      disclaimer: "สร้างโดย AI จากสถิติด้านบน · ควรตรวจสอบก่อนนำไปใช้จริง",
+      errGeneric: "สร้างไม่สำเร็จ ลองอีกครั้ง", notConfigured: "ยังไม่ได้ตั้งค่า endpoint ของ AI (ดู AI_RECOMMENDATION_SETUP.md)",
+      cooldown: (t) => `รออีก ${t}`, rateLimited: "เว้นระยะ 3 นาทีต่อการสร้างหนึ่งครั้ง กรุณารอสักครู่",
+      priHigh: "สำคัญมาก", priMed: "ปานกลาง", priLow: "เล็กน้อย",
+    },
     foot: "ดึงข้อมูลสดจาก Google Sheets ผ่าน Apps Script Web App แล้วรวมยอดในแอป · ทุกคนที่เปิดเห็นข้อมูลสด · อัปเดตเรียลไทม์ผ่าน Firebase เมื่อเปิดใช้งาน (มี poll สำรองทุก 60 วินาที)",
     madeBy: "จัดทำโดย", author: "ทรงพล รุ่งสว่าง", emailTip: "อีเมล", ghTip: "GitHub",
     bahtSuffix: " บาท", cupSuffix: " แก้ว",
@@ -68,7 +82,7 @@ const STR = {
       min: "ต่ำสุด", max: "สูงสุด", range: "พิสัย (Range)", q1: "ควอไทล์ 1 (Q1)", q3: "ควอไทล์ 3 (Q3)",
       iqr: "พิสัยควอไทล์ (IQR)", sd: "ส่วนเบี่ยงเบนมาตรฐาน (SD)", cv: "สัมประสิทธิ์การกระจาย (CV)",
       shape: "ลักษณะการแจกแจง", shapeR: "เบ้ขวา", shapeL: "เบ้ซ้าย", shapeN: "สมมาตร (≈ปกติ)", skewNote: (s) => `ความเบ้ = ${s}`,
-      histTitle: "การกระจายยอดซื้อต่อลูกค้า (ฮิสโทแกรม)", histY: "จำนวนลูกค้า",
+      histTitle: "การกระจายยอดซื้อต่อลูกค้า (ฮิสโทแกรม)", histY: "จำนวนลูกค้า", histX: "ยอดซื้อต่อลูกค้า (฿)",
       freqTitle: "ตารางแจกแจงความถี่ตามเมนู", cMenu: "เมนู", cFreq: "ความถี่ (แก้ว)", cPct: "ร้อยละ", cProp: "สัดส่วน", cCum: "สะสม %",
       modeNote: (p) => `ฐานนิยม: ${p} (ขายมากที่สุด)`, total: "รวม",
       chiTitle: "การทดสอบความสัมพันธ์ (ไคสแควร์)", chiObs: "ตารางความถี่จริง (จำนวนแก้ว)",
@@ -94,10 +108,20 @@ const STR = {
     salesSub: (p) => `${p}% of store total`, cupsSub: "cups sold", custsSub: "unique", avgSub: "per cup", basketSub: "per bill",
     cSalesByMenu: "Sales by menu", cHiLo: "high to low",
     cHotIce: "Hot vs Iced", cShare: "share of sales",
-    cServe: "Dine-in vs Takeaway", cPriceDist: "Distribution by price", cCups: "cups",
+    cServe: "Dine-in vs Takeaway", cPriceDist: "Distribution by price", cCups: "cups", cPriceX: "Price per cup",
     legIce: "Iced", legHot: "Hot", legTakeaway: "Takeaway", legDinein: "Dine-in",
     empty: "No data matches the filters",
     anaHead: "Performance & Recommendations", anaSub: "Based on the whole store — independent of the filters above",
+    ai: {
+      head: "AI Recommendation", sub: "Generated fresh from current data",
+      idle: "Generate AI-written recommendations from the latest data.",
+      generate: "Generate", regenerate: "Regenerate", loading: "Analyzing current data…",
+      asOf: (t) => `Generated ${t}`, cached: "cached",
+      disclaimer: "AI-generated from the statistics above · verify before acting.",
+      errGeneric: "Couldn't generate right now. Please try again.", notConfigured: "AI endpoint not configured (see AI_RECOMMENDATION_SETUP.md).",
+      cooldown: (t) => `Wait ${t}`, rateLimited: "Please wait — one generation every 3 minutes.",
+      priHigh: "High", priMed: "Medium", priLow: "Low",
+    },
     foot: "Reads live Google Sheets data via an Apps Script Web App and aggregates in-app · Everyone sees live data · Realtime updates via Firebase when on (60s safety-net poll)",
     madeBy: "Made by", author: "Songpol Rungsawang", emailTip: "Email", ghTip: "GitHub",
     bahtSuffix: " THB", cupSuffix: " cups",
@@ -117,7 +141,7 @@ const STR = {
       min: "Min", max: "Max", range: "Range", q1: "Q1 (25th)", q3: "Q3 (75th)",
       iqr: "IQR", sd: "Std. deviation (SD)", cv: "Coeff. of variation (CV)",
       shape: "Distribution shape", shapeR: "Right-skewed", shapeL: "Left-skewed", shapeN: "Symmetric (≈normal)", skewNote: (s) => `skewness = ${s}`,
-      histTitle: "Spend-per-customer distribution (histogram)", histY: "customers",
+      histTitle: "Spend-per-customer distribution (histogram)", histY: "customers", histX: "Spend per customer (฿)",
       freqTitle: "Frequency distribution by menu", cMenu: "Menu", cFreq: "Frequency (cups)", cPct: "Percent", cProp: "Proportion", cCum: "Cumulative %",
       modeNote: (p) => `Mode: ${p} (most frequent)`, total: "Total",
       chiTitle: "Association test (Chi-square)", chiObs: "Observed counts (cups)",
@@ -299,23 +323,40 @@ function describeStats(values) {
   for (const x of sorted) { freq[x] = (freq[x] || 0) + 1; if (freq[x] > modeCount) { modeCount = freq[x]; mode = x; } }
   const variance = n > 1 ? values.reduce((s, x) => s + (x - mean) * (x - mean), 0) / (n - 1) : 0;
   const sd = Math.sqrt(variance);
+  // ความเบ้แบบโมเมนต์ (Fisher–Pearson adjusted) — ตรงกับฟังก์ชัน SKEW ของ Excel
+  // ใช้โมเมนต์ที่สามแทนผลต่าง mean−median เพื่อให้จับหางขวา/ค่าผิดปกติได้ถูกต้อง
+  const skew = (n > 2 && sd > 0)
+    ? (n / ((n - 1) * (n - 2))) * values.reduce((s, x) => s + Math.pow((x - mean) / sd, 3), 0)
+    : 0;
   return {
     n, mean, median, mode, min: sorted[0], max: sorted[n - 1], range: sorted[n - 1] - sorted[0],
     q1, q3, iqr: q3 - q1, sd, cv: mean ? (sd / mean) * 100 : 0,
-    skew: sd ? (3 * (mean - median)) / sd : 0, // Pearson's second skewness coefficient
+    skew,
   };
 }
 
-// จัดกลุ่มเป็นช่วงเท่า ๆ กันสำหรับฮิสโทแกรม
+// ปัดความกว้างช่วงให้เป็นเลขกลม ๆ (1, 2, 2.5, 5, 10 × 10^n) — แบบเดียวกับการเลือกสเกลแกนกราฟ
+function niceBinWidth(raw) {
+  if (!(raw > 0)) return 1;
+  const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+  const frac = raw / pow;
+  const nice = frac <= 1 ? 1 : frac <= 2 ? 2 : frac <= 2.5 ? 2.5 : frac <= 5 ? 5 : 10;
+  return nice * pow;
+}
+
+// จัดกลุ่มเป็นช่วงเท่า ๆ กันสำหรับฮิสโทแกรม โดยใช้ขอบช่วงเป็นเลขกลม (เช่น 50–100, 100–150)
 function makeHistogram(values) {
   const n = values.length;
   if (!n) return [];
   const min = Math.min(...values), max = Math.max(...values);
   if (min === max) return [{ label: String(Math.round(min)), count: n }];
-  const k = Math.min(12, Math.max(5, Math.ceil(Math.sqrt(n))));
-  const width = (max - min) / k;
-  const bins = Array.from({ length: k }, (_, i) => ({ lo: min + i * width, hi: min + (i + 1) * width, count: 0 }));
-  for (const x of values) { let i = Math.floor((x - min) / width); if (i >= k) i = k - 1; if (i < 0) i = 0; bins[i].count++; }
+  const targetK = Math.min(16, Math.max(6, Math.ceil(Math.sqrt(n))));
+  const width = niceBinWidth((max - min) / targetK);
+  const start = Math.floor(min / width) * width;          // ขอบล่างปัดลงให้ลงตัวกับความกว้าง
+  const end = Math.ceil(max / width) * width;              // ขอบบนปัดขึ้นให้ครอบค่าสูงสุด
+  const k = Math.max(1, Math.round((end - start) / width));
+  const bins = Array.from({ length: k }, (_, i) => ({ lo: start + i * width, hi: start + (i + 1) * width, count: 0 }));
+  for (const x of values) { let i = Math.floor((x - start) / width); if (i >= k) i = k - 1; if (i < 0) i = 0; bins[i].count++; }
   return bins.map((b) => ({ label: Math.round(b.lo) + "–" + Math.round(b.hi), count: b.count }));
 }
 
@@ -407,6 +448,165 @@ function marketBasket(rows, minCount) {
   });
   rules.sort((a, b) => b.lift - a.lift || b.confidence - a.confidence);
   return { nBaskets: N, rules: rules.slice(0, 6) };
+}
+
+// คูลดาวน์ฝั่งหน้าเว็บ — เก็บ timestamp ที่ปลดล็อกใน localStorage เพื่อกันการรีโหลดข้าม
+function aiCooldownLeft() {
+  try {
+    const until = +localStorage.getItem("cd_ai_until") || 0;
+    return Math.max(0, Math.ceil((until - Date.now()) / 1000));
+  } catch (e) { return 0; }
+}
+function aiSetCooldown(sec) {
+  try { localStorage.setItem("cd_ai_until", String(Date.now() + sec * 1000)); } catch (e) { /* ignore */ }
+}
+
+// แฮชสั้น (FNV-1a) ใช้เป็นคีย์แคชของ AI ตามสภาพข้อมูลปัจจุบัน
+function hashStr(s) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+  }
+  return ("0000000" + h.toString(16)).slice(-8);
+}
+
+// การ์ด "AI Recommendation": อ่านแคชจาก Firebase ก่อน → ถ้าไม่มีจึงเรียก Cloud Function (Claude Haiku)
+// โครงร่าง shimmer สำหรับการ์ด AI ระหว่างโหลดครั้งแรก — รูปแบบเดียวกับสถานะ "ยังไม่ได้สร้าง" (มีบรรทัดเดียว)
+function AISkeleton() {
+  return (
+    <div className="ai-msg"><Shimmer h={13} w="42%" r={4} /></div>
+  );
+}
+
+function AIRecommendation({ stats, lang, T, L, fnUrl, initialLoading }) {
+  const A = L.ai;
+  const hash = useMemo(() => hashStr(JSON.stringify({ lang, stats })), [lang, stats]);
+  const [view, setView] = useState({ status: "idle", data: null, error: null, cached: false });
+  const [cooldown, setCooldown] = useState(() => aiCooldownLeft()); // วินาทีที่เหลือก่อนกดได้อีก (คงค่าหลังรีโหลด)
+  const [cacheChecked, setCacheChecked] = useState(false); // อ่านแคชเสร็จหรือยัง (กันกะพริบ idle ก่อนแสดงผล)
+
+  const dbReady = useMemo(() => {
+    const cfg = window.APP_CONFIG && window.APP_CONFIG.firebase;
+    return !!(cfg && typeof cfg.databaseURL === "string" && cfg.databaseURL.indexOf("YOUR_") < 0 &&
+      window.firebase && window.firebase.database);
+  }, []);
+
+  // อ่านแคชเมื่อ hash/lang เปลี่ยน (ไคลเอนต์อ่านอย่างเดียว — ฟังก์ชันเป็นผู้เขียน)
+  useEffect(() => {
+    let cancelled = false;
+    setView({ status: "idle", data: null, error: null, cached: false });
+    setCacheChecked(false);
+    if (!dbReady) { setCacheChecked(true); return; }
+    try {
+      if (!window.firebase.apps.length) window.firebase.initializeApp(window.APP_CONFIG.firebase);
+      window.firebase.database().ref("aiRecs/" + hash).once("value").then((snap) => {
+        if (cancelled) return;
+        const v = snap.val();
+        if (v && v.lang === lang && Array.isArray(v.recs) && v.recs.length > 0) {
+          setView({ status: "done", data: v, error: null, cached: true });
+        }
+        setCacheChecked(true);
+      }).catch(() => { if (!cancelled) setCacheChecked(true); });
+    } catch (e) { setCacheChecked(true); /* แคชไม่พร้อม — ปล่อยให้ผู้ใช้กดสร้างเอง */ }
+    return () => { cancelled = true; };
+  }, [hash, lang, dbReady]);
+
+  // นับถอยหลัง cooldown จาก timestamp จริง (กัน drift และรองรับการรีโหลด)
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setInterval(() => setCooldown(aiCooldownLeft()), 1000);
+    return () => clearInterval(id);
+  }, [cooldown > 0]);
+
+  const generate = useCallback(async () => {
+    if (!fnUrl) { setView((s) => ({ ...s, status: "error", error: "notConfigured" })); return; }
+    if (cooldown > 0) return;
+    setView((s) => ({ ...s, status: "loading", error: null }));
+    try {
+      const res = await fetch(fnUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hash, lang, stats }),
+      });
+      if (res.status === 429) {
+        let wait = AI_COOLDOWN_S;
+        try { const j = await res.json(); wait = Math.max(5, j.retryAfterSec || AI_COOLDOWN_S); } catch (_) { /* ignore */ }
+        aiSetCooldown(wait);
+        setCooldown(wait);
+        setView((s) => ({ ...s, status: "error", error: "rateLimited" }));
+        return;
+      }
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      if (!data || !Array.isArray(data.recs) || data.recs.length === 0) throw new Error("bad response");
+      setView({ status: "done", data, error: null, cached: false });
+      aiSetCooldown(AI_COOLDOWN_S); // หน่วงเวลา 3 นาทีก่อนกดสร้างซ้ำ
+      setCooldown(AI_COOLDOWN_S);
+    } catch (e) {
+      setView((s) => ({ ...s, status: "error", error: "errGeneric" }));
+    }
+  }, [fnUrl, hash, lang, stats, cooldown]);
+
+  const fmtTime = (ms) => { try { return new Date(ms).toLocaleString(lang === "th" ? "th-TH" : "en-GB"); } catch (e) { return ""; } };
+  const priLabel = (p) => (p === "high" ? A.priHigh : p === "low" ? A.priLow : A.priMed);
+  const priColor = (p) => (p === "high" ? T.clay : p === "low" ? T.dim : T.gold);
+
+  const data = view.data;
+  const busy = view.status === "loading";
+  const showSkeleton = initialLoading || !cacheChecked; // shimmer ตอนโหลดครั้งแรก/ระหว่างอ่านแคช
+  const blocked = busy || cooldown > 0 || showSkeleton;
+  const cdLabel = cooldown >= 60 ? `${Math.floor(cooldown / 60)}:${String(cooldown % 60).padStart(2, "0")}` : `${cooldown}s`;
+  const errMsg = view.error === "notConfigured" ? A.notConfigured
+    : view.error === "rateLimited" ? A.rateLimited
+    : A.errGeneric;
+
+  return (
+    <div className="card span2 ai-card">
+      <div className="card-h ai-head">
+        <div className="ai-head-l">
+          <h3><span className="ai-spark">✦</span> {A.head} <span className="ai-model">Claude Haiku 4.5</span></h3>
+          <span>{A.sub}</span>
+        </div>
+        <button className="ai-btn" onClick={generate} disabled={blocked}>
+          {busy ? A.loading : cooldown > 0 ? A.cooldown(cdLabel) : (data ? A.regenerate : A.generate)}
+        </button>
+      </div>
+
+      {showSkeleton ? <AISkeleton /> : (<>
+
+      {view.status === "error" ? (
+        <div className="ai-msg ai-err">{errMsg}</div>
+      ) : null}
+
+      {!data && view.status !== "error" ? (
+        <div className="ai-msg ai-idle">{busy ? A.loading : A.idle}</div>
+      ) : null}
+
+      {data ? (
+        <div className="ai-body">
+          {data.summary ? <p className="ai-summary">{data.summary}</p> : null}
+          <ol className="ai-list">
+            {data.recs.map((r, i) => (
+              <li key={i} className="ai-item">
+                <div className="ai-item-top">
+                  <span className="ai-pri" style={{ color: priColor(r.priority), borderColor: priColor(r.priority) }}>{priLabel(r.priority)}</span>
+                  <strong>{r.title}</strong>
+                </div>
+                <p>{r.detail}</p>
+              </li>
+            ))}
+          </ol>
+          <div className="ai-foot">
+            <span>{A.asOf(fmtTime(data.generatedAt))}{view.cached ? " · " + A.cached : ""}</span>
+          </div>
+          <p className="ai-disclaimer">{A.disclaimer}</p>
+        </div>
+      ) : null}
+
+      </>)}
+    </div>
+  );
 }
 
 function CoffeeDashboard() {
@@ -553,6 +753,29 @@ function CoffeeDashboard() {
   const chiPT = useMemo(() => chiSquareTest(rows, (r) => r.p, (r) => r.t, PRODUCTS, TYPES), [rows]);
   const chiTS = useMemo(() => chiSquareTest(rows, (r) => r.t, (r) => r.k, TYPES, TAKES), [rows]);
   const chiPS = useMemo(() => chiSquareTest(rows, (r) => r.p, (r) => r.k, PRODUCTS, TAKES), [rows]);
+
+  // payload ที่ "คำนวณไว้แล้ว" สำหรับส่งให้ Cloud Function (AI ตีความ ไม่คำนวณซ้ำ)
+  const aiStats = useMemo(() => {
+    if (!desc || !desc.n) return null;
+    const r0 = (x) => Math.round(x || 0);
+    const r1 = (x) => Math.round((x || 0) * 10) / 10;
+    const shape = desc.skew > 0.5 ? "right-skewed" : desc.skew < -0.5 ? "left-skewed" : "symmetric";
+    return {
+      currency: "THB",
+      spendPerCustomer: {
+        n: desc.n, mean: r0(desc.mean), median: r0(desc.median), mode: r0(desc.mode),
+        sd: r0(desc.sd), cv_pct: r1(desc.cv), min: desc.min, max: desc.max,
+        q1: desc.q1, q3: desc.q3, iqr: desc.iqr, skewness: r1(desc.skew), shape,
+      },
+      topMenus: (freq && freq.rows ? freq.rows : []).slice(0, 6)
+        .map((d) => ({ menu: pname(d.p), cups: d.freq, pct: r1(d.pct) })),
+      hotVsIced: { hot: S.typ.hot, iced: S.typ.ice },
+      dineInVsTakeaway: { dineIn: S.tak["for here"], takeaway: S.tak["to go"] },
+      priceMixCups: { "50": S.price[50] || 0, "60": S.price[60] || 0, "70": S.price[70] || 0 },
+      menuTemperatureAssociation: { p_value: Math.round(chiPT.p * 1000) / 1000, cramersV: Math.round(chiPT.cramersV * 100) / 100 },
+      totals: { sales: Math.round(totalSales), customers: totalCusts, avgPerCup: r0(avg), avgPerBill: r0(basket) },
+    };
+  }, [desc, freq, S, chiPT, totalSales, totalCusts, avg, basket, lang]);
   const mba = useMemo(() => marketBasket(rows), [rows]);
   const chiStrength = (v) => (v < 0.1 ? L.st.sNone : v < 0.2 ? L.st.sWeak : v < 0.4 ? L.st.sMod : L.st.sStrong);
   const num1 = (x) => (Math.round(x * 10) / 10).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -739,12 +962,12 @@ function CoffeeDashboard() {
 
         <div className="card span2">
           <div className="card-h"><h3>{L.cPriceDist}</h3><span>{L.cCups}</span></div>
-          {initialLoading ? <Shimmer h={170} />
+          {initialLoading ? <Shimmer h={196} />
             : S.cups ? (
-            <ResponsiveContainer width="100%" height={170}>
-              <BarChart data={byPrice} margin={{ left: -20, right: 8, top: 12, bottom: 0 }}>
-                <XAxis dataKey="name" tick={{ fill: T.text, fontSize: 12 }} axisLine={{ stroke: T.line }} tickLine={false} />
-                <YAxis tick={{ fill: T.dim, fontSize: 11 }} axisLine={false} tickLine={false} />
+            <ResponsiveContainer width="100%" height={196}>
+              <BarChart data={byPrice} margin={{ left: 8, right: 12, top: 12, bottom: 24 }}>
+                <XAxis dataKey="name" tick={{ fill: T.text, fontSize: 12 }} axisLine={{ stroke: T.line }} tickLine={false} label={{ value: L.cPriceX, position: "insideBottom", offset: -12, style: { fill: T.dim, fontSize: 11, textAnchor: "middle" } }} />
+                <YAxis tick={{ fill: T.dim, fontSize: 11 }} axisLine={false} tickLine={false} label={{ value: L.cCups, angle: -90, position: "insideLeft", offset: 14, style: { fill: T.dim, fontSize: 11, textAnchor: "middle" } }} />
                 <Tooltip cursor={{ fill: theme === "dark" ? "#ffffff08" : "#00000008" }} content={<Tip T={T} suffix={L.cupSuffix} />} />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={56}>
                   {byPrice.map((d, i) => <Cell key={i} fill={[T.goldDim, T.gold, "#f2c46b"][i]} />)}
@@ -780,7 +1003,7 @@ function CoffeeDashboard() {
             </div>
             <div className="stat-shape">
               <span className="stat-shape-l">{L.st.shape}:</span>
-              <span className="pill-shape">{desc.skew > 0.2 ? L.st.shapeR : desc.skew < -0.2 ? L.st.shapeL : L.st.shapeN}</span>
+              <span className="pill-shape">{desc.skew > 0.5 ? L.st.shapeR : desc.skew < -0.5 ? L.st.shapeL : L.st.shapeN}</span>
               <span className="stat-shape-n">{L.st.skewNote(num1(desc.skew))}</span>
             </div>
             </>}
@@ -788,16 +1011,20 @@ function CoffeeDashboard() {
 
           <div className="card span2">
             <div className="card-h"><h3>{L.st.histTitle}</h3><span>{L.st.histY}</span></div>
-            {initialLoading ? <Shimmer h={180} /> : (
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={hist} margin={{ left: -22, right: 8, top: 10, bottom: 0 }}>
-                <XAxis dataKey="label" tick={{ fill: T.dim, fontSize: 10 }} axisLine={{ stroke: T.line }} tickLine={false} />
-                <YAxis tick={{ fill: T.dim, fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+            <div className="hist-wrap">
+            <div className="hist-inner">
+            {initialLoading ? <Shimmer h={215} /> : (
+            <ResponsiveContainer width="100%" height={215}>
+              <BarChart data={hist} barCategoryGap={0} margin={{ left: 6, right: 12, top: 10, bottom: 26 }}>
+                <XAxis dataKey="label" interval={0} tick={{ fill: T.dim, fontSize: 9 }} axisLine={{ stroke: T.line }} tickLine={false} label={{ value: L.st.histX, position: "insideBottom", offset: -14, style: { fill: T.dim, fontSize: 11, textAnchor: "middle" } }} />
+                <YAxis tick={{ fill: T.dim, fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} label={{ value: L.st.histY, angle: -90, position: "insideLeft", offset: 14, style: { fill: T.dim, fontSize: 11, textAnchor: "middle" } }} />
                 <Tooltip cursor={{ fill: theme === "dark" ? "#ffffff08" : "#00000008" }} content={<Tip T={T} suffix={" " + L.st.histY} />} />
-                <Bar dataKey="count" radius={[5, 5, 0, 0]} fill={T.jade} barSize={30} />
+                <Bar dataKey="count" radius={[5, 5, 0, 0]} fill={T.jade} stroke={T.panel} strokeWidth={1} />
               </BarChart>
             </ResponsiveContainer>
             )}
+            </div>
+            </div>
           </div>
 
           <div className="card span2">
@@ -883,6 +1110,14 @@ function CoffeeDashboard() {
             ))}
         </div>
       </section>
+
+      {AI_FN_URL && (initialLoading || aiStats) ? (
+      <section className="cd-ai-wrap">
+        <div className="cd-grid">
+          <AIRecommendation stats={aiStats} lang={lang} T={T} L={L} fnUrl={AI_FN_URL} initialLoading={initialLoading} />
+        </div>
+      </section>
+      ) : null}
 
       <footer className="cd-foot">
         <div className="foot-credit">{L.madeBy} <strong>{L.author}</strong> (695210052-0)</div>
