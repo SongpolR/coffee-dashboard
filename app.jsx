@@ -45,7 +45,7 @@ const STR = {
     salesSub: (p) => `${p}% ของยอดทั้งร้าน`, cupsSub: "แก้วที่ขายได้", custsSub: "คนที่ไม่ซ้ำ", avgSub: "ต่อแก้ว", basketSub: "ต่อบิล",
     cSalesByMenu: "ยอดขายตามเมนู", cHiLo: "เรียงจากมากไปน้อย",
     cHotIce: "ร้อน vs เย็น", cShare: "สัดส่วนยอดขาย",
-    cServe: "ทานที่ร้าน vs ซื้อกลับ", cPriceDist: "การกระจายตามระดับราคา", cCups: "จำนวนแก้ว",
+    cServe: "ทานที่ร้าน vs ซื้อกลับ", cPriceDist: "การกระจายตามระดับราคา", cCups: "จำนวนแก้ว", cPriceX: "ราคาต่อแก้ว",
     legIce: "เย็น (ice)", legHot: "ร้อน (hot)", legTakeaway: "ซื้อกลับ (to go)", legDinein: "ทานที่ร้าน (for here)",
     empty: "ไม่มีข้อมูลตรงกับตัวกรอง",
     anaHead: "ผลการดำเนินงาน & ข้อเสนอแนะ", anaSub: "วิเคราะห์จากภาพรวมทั้งร้าน — ไม่ขึ้นกับตัวกรองด้านบน",
@@ -68,7 +68,7 @@ const STR = {
       min: "ต่ำสุด", max: "สูงสุด", range: "พิสัย (Range)", q1: "ควอไทล์ 1 (Q1)", q3: "ควอไทล์ 3 (Q3)",
       iqr: "พิสัยควอไทล์ (IQR)", sd: "ส่วนเบี่ยงเบนมาตรฐาน (SD)", cv: "สัมประสิทธิ์การกระจาย (CV)",
       shape: "ลักษณะการแจกแจง", shapeR: "เบ้ขวา", shapeL: "เบ้ซ้าย", shapeN: "สมมาตร (≈ปกติ)", skewNote: (s) => `ความเบ้ = ${s}`,
-      histTitle: "การกระจายยอดซื้อต่อลูกค้า (ฮิสโทแกรม)", histY: "จำนวนลูกค้า",
+      histTitle: "การกระจายยอดซื้อต่อลูกค้า (ฮิสโทแกรม)", histY: "จำนวนลูกค้า", histX: "ยอดซื้อต่อลูกค้า (฿)",
       freqTitle: "ตารางแจกแจงความถี่ตามเมนู", cMenu: "เมนู", cFreq: "ความถี่ (แก้ว)", cPct: "ร้อยละ", cProp: "สัดส่วน", cCum: "สะสม %",
       modeNote: (p) => `ฐานนิยม: ${p} (ขายมากที่สุด)`, total: "รวม",
       chiTitle: "การทดสอบความสัมพันธ์ (ไคสแควร์)", chiObs: "ตารางความถี่จริง (จำนวนแก้ว)",
@@ -94,7 +94,7 @@ const STR = {
     salesSub: (p) => `${p}% of store total`, cupsSub: "cups sold", custsSub: "unique", avgSub: "per cup", basketSub: "per bill",
     cSalesByMenu: "Sales by menu", cHiLo: "high to low",
     cHotIce: "Hot vs Iced", cShare: "share of sales",
-    cServe: "Dine-in vs Takeaway", cPriceDist: "Distribution by price", cCups: "cups",
+    cServe: "Dine-in vs Takeaway", cPriceDist: "Distribution by price", cCups: "cups", cPriceX: "Price per cup",
     legIce: "Iced", legHot: "Hot", legTakeaway: "Takeaway", legDinein: "Dine-in",
     empty: "No data matches the filters",
     anaHead: "Performance & Recommendations", anaSub: "Based on the whole store — independent of the filters above",
@@ -117,7 +117,7 @@ const STR = {
       min: "Min", max: "Max", range: "Range", q1: "Q1 (25th)", q3: "Q3 (75th)",
       iqr: "IQR", sd: "Std. deviation (SD)", cv: "Coeff. of variation (CV)",
       shape: "Distribution shape", shapeR: "Right-skewed", shapeL: "Left-skewed", shapeN: "Symmetric (≈normal)", skewNote: (s) => `skewness = ${s}`,
-      histTitle: "Spend-per-customer distribution (histogram)", histY: "customers",
+      histTitle: "Spend-per-customer distribution (histogram)", histY: "customers", histX: "Spend per customer (฿)",
       freqTitle: "Frequency distribution by menu", cMenu: "Menu", cFreq: "Frequency (cups)", cPct: "Percent", cProp: "Proportion", cCum: "Cumulative %",
       modeNote: (p) => `Mode: ${p} (most frequent)`, total: "Total",
       chiTitle: "Association test (Chi-square)", chiObs: "Observed counts (cups)",
@@ -299,23 +299,40 @@ function describeStats(values) {
   for (const x of sorted) { freq[x] = (freq[x] || 0) + 1; if (freq[x] > modeCount) { modeCount = freq[x]; mode = x; } }
   const variance = n > 1 ? values.reduce((s, x) => s + (x - mean) * (x - mean), 0) / (n - 1) : 0;
   const sd = Math.sqrt(variance);
+  // ความเบ้แบบโมเมนต์ (Fisher–Pearson adjusted) — ตรงกับฟังก์ชัน SKEW ของ Excel
+  // ใช้โมเมนต์ที่สามแทนผลต่าง mean−median เพื่อให้จับหางขวา/ค่าผิดปกติได้ถูกต้อง
+  const skew = (n > 2 && sd > 0)
+    ? (n / ((n - 1) * (n - 2))) * values.reduce((s, x) => s + Math.pow((x - mean) / sd, 3), 0)
+    : 0;
   return {
     n, mean, median, mode, min: sorted[0], max: sorted[n - 1], range: sorted[n - 1] - sorted[0],
     q1, q3, iqr: q3 - q1, sd, cv: mean ? (sd / mean) * 100 : 0,
-    skew: sd ? (3 * (mean - median)) / sd : 0, // Pearson's second skewness coefficient
+    skew,
   };
 }
 
-// จัดกลุ่มเป็นช่วงเท่า ๆ กันสำหรับฮิสโทแกรม
+// ปัดความกว้างช่วงให้เป็นเลขกลม ๆ (1, 2, 2.5, 5, 10 × 10^n) — แบบเดียวกับการเลือกสเกลแกนกราฟ
+function niceBinWidth(raw) {
+  if (!(raw > 0)) return 1;
+  const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+  const frac = raw / pow;
+  const nice = frac <= 1 ? 1 : frac <= 2 ? 2 : frac <= 2.5 ? 2.5 : frac <= 5 ? 5 : 10;
+  return nice * pow;
+}
+
+// จัดกลุ่มเป็นช่วงเท่า ๆ กันสำหรับฮิสโทแกรม โดยใช้ขอบช่วงเป็นเลขกลม (เช่น 50–100, 100–150)
 function makeHistogram(values) {
   const n = values.length;
   if (!n) return [];
   const min = Math.min(...values), max = Math.max(...values);
   if (min === max) return [{ label: String(Math.round(min)), count: n }];
-  const k = Math.min(12, Math.max(5, Math.ceil(Math.sqrt(n))));
-  const width = (max - min) / k;
-  const bins = Array.from({ length: k }, (_, i) => ({ lo: min + i * width, hi: min + (i + 1) * width, count: 0 }));
-  for (const x of values) { let i = Math.floor((x - min) / width); if (i >= k) i = k - 1; if (i < 0) i = 0; bins[i].count++; }
+  const targetK = Math.min(16, Math.max(6, Math.ceil(Math.sqrt(n))));
+  const width = niceBinWidth((max - min) / targetK);
+  const start = Math.floor(min / width) * width;          // ขอบล่างปัดลงให้ลงตัวกับความกว้าง
+  const end = Math.ceil(max / width) * width;              // ขอบบนปัดขึ้นให้ครอบค่าสูงสุด
+  const k = Math.max(1, Math.round((end - start) / width));
+  const bins = Array.from({ length: k }, (_, i) => ({ lo: start + i * width, hi: start + (i + 1) * width, count: 0 }));
+  for (const x of values) { let i = Math.floor((x - start) / width); if (i >= k) i = k - 1; if (i < 0) i = 0; bins[i].count++; }
   return bins.map((b) => ({ label: Math.round(b.lo) + "–" + Math.round(b.hi), count: b.count }));
 }
 
@@ -739,12 +756,12 @@ function CoffeeDashboard() {
 
         <div className="card span2">
           <div className="card-h"><h3>{L.cPriceDist}</h3><span>{L.cCups}</span></div>
-          {initialLoading ? <Shimmer h={170} />
+          {initialLoading ? <Shimmer h={196} />
             : S.cups ? (
-            <ResponsiveContainer width="100%" height={170}>
-              <BarChart data={byPrice} margin={{ left: -20, right: 8, top: 12, bottom: 0 }}>
-                <XAxis dataKey="name" tick={{ fill: T.text, fontSize: 12 }} axisLine={{ stroke: T.line }} tickLine={false} />
-                <YAxis tick={{ fill: T.dim, fontSize: 11 }} axisLine={false} tickLine={false} />
+            <ResponsiveContainer width="100%" height={196}>
+              <BarChart data={byPrice} margin={{ left: 8, right: 12, top: 12, bottom: 24 }}>
+                <XAxis dataKey="name" tick={{ fill: T.text, fontSize: 12 }} axisLine={{ stroke: T.line }} tickLine={false} label={{ value: L.cPriceX, position: "insideBottom", offset: -12, style: { fill: T.dim, fontSize: 11, textAnchor: "middle" } }} />
+                <YAxis tick={{ fill: T.dim, fontSize: 11 }} axisLine={false} tickLine={false} label={{ value: L.cCups, angle: -90, position: "insideLeft", offset: 14, style: { fill: T.dim, fontSize: 11, textAnchor: "middle" } }} />
                 <Tooltip cursor={{ fill: theme === "dark" ? "#ffffff08" : "#00000008" }} content={<Tip T={T} suffix={L.cupSuffix} />} />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]} barSize={56}>
                   {byPrice.map((d, i) => <Cell key={i} fill={[T.goldDim, T.gold, "#f2c46b"][i]} />)}
@@ -780,7 +797,7 @@ function CoffeeDashboard() {
             </div>
             <div className="stat-shape">
               <span className="stat-shape-l">{L.st.shape}:</span>
-              <span className="pill-shape">{desc.skew > 0.2 ? L.st.shapeR : desc.skew < -0.2 ? L.st.shapeL : L.st.shapeN}</span>
+              <span className="pill-shape">{desc.skew > 0.5 ? L.st.shapeR : desc.skew < -0.5 ? L.st.shapeL : L.st.shapeN}</span>
               <span className="stat-shape-n">{L.st.skewNote(num1(desc.skew))}</span>
             </div>
             </>}
@@ -788,16 +805,20 @@ function CoffeeDashboard() {
 
           <div className="card span2">
             <div className="card-h"><h3>{L.st.histTitle}</h3><span>{L.st.histY}</span></div>
-            {initialLoading ? <Shimmer h={180} /> : (
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={hist} margin={{ left: -22, right: 8, top: 10, bottom: 0 }}>
-                <XAxis dataKey="label" tick={{ fill: T.dim, fontSize: 10 }} axisLine={{ stroke: T.line }} tickLine={false} />
-                <YAxis tick={{ fill: T.dim, fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+            <div className="hist-wrap">
+            <div className="hist-inner">
+            {initialLoading ? <Shimmer h={215} /> : (
+            <ResponsiveContainer width="100%" height={215}>
+              <BarChart data={hist} barCategoryGap={0} margin={{ left: 6, right: 12, top: 10, bottom: 26 }}>
+                <XAxis dataKey="label" interval={0} tick={{ fill: T.dim, fontSize: 9 }} axisLine={{ stroke: T.line }} tickLine={false} label={{ value: L.st.histX, position: "insideBottom", offset: -14, style: { fill: T.dim, fontSize: 11, textAnchor: "middle" } }} />
+                <YAxis tick={{ fill: T.dim, fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} label={{ value: L.st.histY, angle: -90, position: "insideLeft", offset: 14, style: { fill: T.dim, fontSize: 11, textAnchor: "middle" } }} />
                 <Tooltip cursor={{ fill: theme === "dark" ? "#ffffff08" : "#00000008" }} content={<Tip T={T} suffix={" " + L.st.histY} />} />
-                <Bar dataKey="count" radius={[5, 5, 0, 0]} fill={T.jade} barSize={30} />
+                <Bar dataKey="count" radius={[5, 5, 0, 0]} fill={T.jade} stroke={T.panel} strokeWidth={1} />
               </BarChart>
             </ResponsiveContainer>
             )}
+            </div>
+            </div>
           </div>
 
           <div className="card span2">
