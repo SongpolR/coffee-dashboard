@@ -721,7 +721,12 @@ function CoffeeDashboard() {
 
   // อัปเดตชื่อแท็บ + แอตทริบิวต์ lang ของหน้าให้ตรงกับภาษาที่เลือก (รองรับ TH/EN)
   useEffect(() => { document.title = L.title; document.documentElement.lang = lang; lsSet("cd_lang", lang); }, [lang, L]);
-  useEffect(() => { lsSet("cd_theme", theme); }, [theme]);
+  useEffect(() => {
+    lsSet("cd_theme", theme);
+    // ให้พื้นหลังของหน้า (html/body) ตรงกับธีม ไม่ให้เห็นพื้นเข้มรอบการ์ดตอนใช้ธีมสว่าง
+    document.documentElement.style.background = T.bg;
+    document.body.style.background = T.bg;
+  }, [theme, T.bg]);
 
   const f = { product: fProduct, type: fType, take: fTake };
   const S = useMemo(() => summarize(rows, f), [rows, fProduct, fType, fTake]);
