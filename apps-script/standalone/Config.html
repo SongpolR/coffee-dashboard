@@ -1,0 +1,22 @@
+<script>
+/**
+ * ค่าตั้งค่าฝั่งเบราว์เซอร์สำหรับเวอร์ชัน Apps Script (self-contained) — ค่าเหล่านี้ "ไม่ลับ"
+ *
+ * ต่างจาก config.js ของเวอร์ชัน GitHub Pages:
+ *   • ไม่มี  apiUrl   — ดึงข้อมูลผ่าน google.script.run.getOrders() (ไม่ใช่ fetch)
+ *   • ไม่มี  firebase — ไม่มี realtime push; แอปถอยไปใช้ polling ทุก 15 วิ โดยอัตโนมัติ
+ *   • ไม่มี  aiFnUrl จริง — เรียก AI ผ่าน google.script.run.getAiRecommendation()
+ *     แต่ต้องตั้งค่าให้ "ไม่ว่าง" เพื่อให้การ์ด AI แสดง (โค้ดเช็ค AI_FN_URL ว่ามีค่า)
+ *
+ * ความลับเดียว (Anthropic API key) อยู่ใน Apps Script ▸ Project Settings ▸ Script properties
+ * ชื่อ ANTHROPIC_API_KEY เท่านั้น — ไม่อยู่ในไฟล์นี้และไม่ถูกส่งมาที่เบราว์เซอร์
+ */
+window.APP_CONFIG = {
+  // ปุ่ม "Open Sheet" บนหัวแดชบอร์ด (ลิงก์ชีตสาธารณะ) — ใส่ให้ตรงกับชีตของคุณ
+  "sheetUrl": "https://docs.google.com/spreadsheets/d/1vTRRy_yjZgVq1dW9R2ya2pK4moTqzb0xCE4bYZRyp04/edit?usp=sharing",
+  // sentinel: ค่าไม่ว่าง = เปิดการ์ด AI (การรับส่งจริงใช้ google.script.run ไม่ใช่ URL นี้)
+  "aiFnUrl": "gas",
+  // ความถี่รีเฟรชอัตโนมัติเป็นวินาที (ค่าเริ่มต้น 15 · ขั้นต่ำ 5) — ใช้ทั้งช่วง poll และตัวเลขบนป้ายสวิตช์
+  "pollSeconds": 15
+};
+</script>
