@@ -1,3 +1,5 @@
+<!-- AUTO-DERIVED from ../../app.jsx — do not hand-edit; only the transport layer differs (google.script.run instead of fetch/Firebase). -->
+<script type="text/babel" data-presets="react">
 const { useState, useMemo, useEffect, useRef, useCallback } = React;
 const { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Cell, PieChart, Pie, Tooltip, LabelList } = Recharts;
 
@@ -10,6 +12,9 @@ const SHEET_URL = (window.APP_CONFIG && window.APP_CONFIG.sheetUrl) || "";
 const AI_FN_URL = (window.APP_CONFIG && window.APP_CONFIG.aiFnUrl) || "";
 // จำกัดอัตราฝั่งหน้าเว็บ: หน่วงเวลา 3 นาทีระหว่างการสร้างแต่ละครั้ง
 const AI_COOLDOWN_S = 180;
+// ความถี่รีเฟรชอัตโนมัติ (วินาที) — ตั้งค่าได้ใน Config.html ▸ pollSeconds (ค่าเริ่มต้น 15 · ขั้นต่ำ 5)
+// ใช้เป็นแหล่งเดียวทั้งช่วงเวลา poll และตัวเลขบนป้ายสวิตช์ เพื่อไม่ให้หลุดกัน
+const POLL_S = Math.max(5, (window.APP_CONFIG && +window.APP_CONFIG.pollSeconds) || 15);
 
 const PRODUCTS = ["เอสเพรสโซ", "อเมริกาโน่", "ลาเต้", "คาปูชิโน่", "มอคค่า"];
 const PRODUCT_EN = { "เอสเพรสโซ": "Espresso", "อเมริกาโน่": "Americano", "ลาเต้": "Latte", "คาปูชิโน่": "Cappuccino", "มอคค่า": "Mocha" };
@@ -41,7 +46,7 @@ const STR = {
     syncing: "กำลังซิงค์…", syncFail: "ซิงค์ไม่สำเร็จ", syncOk: "ซิงค์กับ Google Sheet แล้ว", syncIdle: "ข้อมูลฝังในแอป (ยังไม่ได้ซิงค์)",
     updated: (a) => `อัปเดตล่าสุด ${a}`, idleHint: "กดซิงค์เพื่อดึงข้อมูลสดจากชีต", rowsWord: "แถว",
     err: { parse: "อ่านข้อมูลไม่สำเร็จ — รูปแบบ JSON ไม่ตรง (เปิดดู debug)", net: "เชื่อมต่อ API ไม่ได้ — ตรวจว่า Apps Script deploy เป็น Web app (Anyone) แล้วลองใหม่" },
-    syncNow: "ซิงค์เดี๋ยวนี้", syncingBtn: "กำลังซิงค์", autoLabel: "อัปเดตเรียลไทม์",
+    syncNow: "ซิงค์เดี๋ยวนี้", syncingBtn: "กำลังซิงค์", autoLabel: "อัปเดตอัตโนมัติ", autoUnit: " วิ",
     toast: { title: "อัปเดตแดชบอร์ดแล้ว", sub: "ซิงค์ข้อมูลใหม่จากชีตแล้ว", newN: (n) => `+${n} ออร์เดอร์ใหม่` },
     fMenu: "เมนู", fTemp: "อุณหภูมิ", fServe: "รูปแบบ", fPrice: "ราคา",
     all: "ทั้งหมด", hot: "ร้อน", iced: "เย็น", dinein: "ทานที่ร้าน", takeaway: "ซื้อกลับ",
@@ -64,7 +69,7 @@ const STR = {
       cooldown: (t) => `รออีก ${t}`, rateLimited: "เว้นระยะ 3 นาทีต่อการสร้างหนึ่งครั้ง กรุณารอสักครู่",
       priHigh: "สำคัญมาก", priMed: "ปานกลาง", priLow: "เล็กน้อย",
     },
-    foot: "ดึงข้อมูลสดจาก Google Sheets ผ่าน Apps Script Web App แล้วรวมยอดในแอป · ทุกคนที่เปิดเห็นข้อมูลสด · อัปเดตเรียลไทม์ผ่าน Firebase เมื่อเปิดใช้งาน (มี poll สำรองทุก 60 วินาที)",
+    foot: "ดึงข้อมูลสดจาก Google Sheets ผ่าน Apps Script Web App แล้วรวมยอดในแอป · ทุกคนที่เปิดเห็นข้อมูลสด · อัปเดตอัตโนมัติทุก 15 วินาทีเมื่อเปิดใช้งาน",
     madeBy: "จัดทำโดย", author: "ทรงพล รุ่งสว่าง", emailTip: "อีเมล", ghTip: "GitHub",
     bahtSuffix: " บาท", cupSuffix: " แก้ว",
     dbgHead: (n) => `log จาก connector (${n} ตัวอักษร) — คัดลอกส่งมาให้ผมเพื่อปรับ parser`,
@@ -101,7 +106,7 @@ const STR = {
     syncing: "Syncing…", syncFail: "Sync failed", syncOk: "Synced with Google Sheet", syncIdle: "Embedded data (not synced yet)",
     updated: (a) => `Updated ${a}`, idleHint: "Press sync to pull live data from the sheet", rowsWord: "rows",
     err: { parse: "Couldn't read the data — unexpected JSON format (see debug)", net: "Can't reach the API — check the Apps Script is deployed as a Web app (Anyone), then retry" },
-    syncNow: "Sync now", syncingBtn: "Syncing", autoLabel: "Realtime updates",
+    syncNow: "Sync now", syncingBtn: "Syncing", autoLabel: "Auto-refresh", autoUnit: "s",
     toast: { title: "Dashboard updated", sub: "Synced new data from the sheet", newN: (n) => `+${n} new order${n === 1 ? "" : "s"}` },
     fMenu: "Menu", fTemp: "Temp", fServe: "Service", fPrice: "Price",
     all: "All", hot: "Hot", iced: "Iced", dinein: "Dine-in", takeaway: "Takeaway",
@@ -124,7 +129,7 @@ const STR = {
       cooldown: (t) => `Wait ${t}`, rateLimited: "Please wait — one generation every 3 minutes.",
       priHigh: "High", priMed: "Medium", priLow: "Low",
     },
-    foot: "Reads live Google Sheets data via an Apps Script Web App and aggregates in-app · Everyone sees live data · Realtime updates via Firebase when on (60s safety-net poll)",
+    foot: "Reads live Google Sheets data via an Apps Script Web App and aggregates in-app · Everyone sees live data · Auto-refresh every 15s when on",
     madeBy: "Made by", author: "Songpol Rungsawang", emailTip: "Email", ghTip: "GitHub",
     bahtSuffix: " THB", cupSuffix: " cups",
     dbgHead: (n) => `Connector log (${n} chars) — copy and send it to me to tune the parser`,
@@ -246,31 +251,31 @@ const baht = (n) => "฿" + Math.round(n).toLocaleString("en-US");
 const lsGet = (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} };
 
-async function fetchLiveData() {
-  // ดึง JSON สดจาก Google Apps Script Web App — อ่านชีตแบบเรียลไทม์ ไม่ติดแคช Publish-to-web
-  const url = API_URL + (API_URL.indexOf("?") >= 0 ? "&" : "?") + "_=" + Date.now(); // กันแคชฝั่ง browser
-  let res;
-  try {
-    res = await fetch(url, { cache: "no-store", redirect: "follow" });
-  } catch (e) {
-    throw new Error("NETWORK");
-  }
-  if (!res.ok) throw new Error("HTTP " + res.status);
-  let data;
-  try {
-    data = await res.json();
-  } catch (e) {
-    const err = new Error("PARSE_FAIL");
-    err.sample = "(ตอบกลับไม่ใช่ JSON — ตรวจว่า API_URL ชี้ไปที่ /exec ของ Apps Script)";
-    throw err;
-  }
-  const rows = Array.isArray(data.rows) ? data.rows : [];
-  if (!rows.length) {
-    const err = new Error("PARSE_FAIL");
-    err.sample = JSON.stringify(data).slice(0, 4000);
-    throw err;
-  }
-  return { rows, issues: data.issues || [], found: data.found || rows.length, maxNo: data.maxNo || 0 };
+// ── Transport (Apps Script build): call server-side getOrders() via the native
+// google.script.run bridge instead of fetch(API_URL). Same return shape and same
+// error codes (NETWORK / PARSE_FAIL + .sample) so every downstream feature behaves
+// identically to the GitHub/Pages build. See ../standalone/Code.gs ▸ getOrders().
+function fetchLiveData() {
+  return new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler((data) => {
+        data = data || {};
+        const rows = Array.isArray(data.rows) ? data.rows : [];
+        if (!rows.length) {
+          const err = new Error("PARSE_FAIL");
+          err.sample = JSON.stringify(data).slice(0, 4000);
+          reject(err);
+          return;
+        }
+        resolve({ rows, issues: data.issues || [], found: data.found || rows.length, maxNo: data.maxNo || 0 });
+      })
+      .withFailureHandler((e) => {
+        const err = new Error("NETWORK");
+        err.sample = String((e && e.message) || e || "");
+        reject(err);
+      })
+      .getOrders();
+  });
 }
 
 function summarize(rows, f) {
@@ -482,31 +487,26 @@ function AIRecommendation({ stats, lang, T, L, fnUrl, initialLoading }) {
   const [cooldown, setCooldown] = useState(() => aiCooldownLeft()); // วินาทีที่เหลือก่อนกดได้อีก (คงค่าหลังรีโหลด)
   const [cacheChecked, setCacheChecked] = useState(false); // อ่านแคชเสร็จหรือยัง (กันกะพริบ idle ก่อนแสดงผล)
 
-  const dbReady = useMemo(() => {
-    const cfg = window.APP_CONFIG && window.APP_CONFIG.firebase;
-    return !!(cfg && typeof cfg.databaseURL === "string" && cfg.databaseURL.indexOf("YOUR_") < 0 &&
-      window.firebase && window.firebase.database);
-  }, []);
-
-  // อ่านแคชเมื่อ hash/lang เปลี่ยน (ไคลเอนต์อ่านอย่างเดียว — ฟังก์ชันเป็นผู้เขียน)
+  // อ่านแคชเมื่อ hash/lang เปลี่ยน — เซิร์ฟเวอร์ (Code.gs) เป็นผู้เขียนผ่าน CacheService
+  // ไคลเอนต์อ่านอย่างเดียวผ่าน google.script.run.getCachedAi() (แทน Firebase /aiRecs)
   useEffect(() => {
     let cancelled = false;
     setView({ status: "idle", data: null, error: null, cached: false });
     setCacheChecked(false);
-    if (!dbReady) { setCacheChecked(true); return; }
     try {
-      if (!window.firebase.apps.length) window.firebase.initializeApp(window.APP_CONFIG.firebase);
-      window.firebase.database().ref("aiRecs/" + hash).once("value").then((snap) => {
-        if (cancelled) return;
-        const v = snap.val();
-        if (v && v.lang === lang && Array.isArray(v.recs) && v.recs.length > 0) {
-          setView({ status: "done", data: v, error: null, cached: true });
-        }
-        setCacheChecked(true);
-      }).catch(() => { if (!cancelled) setCacheChecked(true); });
+      google.script.run
+        .withSuccessHandler((v) => {
+          if (cancelled) return;
+          if (v && v.lang === lang && Array.isArray(v.recs) && v.recs.length > 0) {
+            setView({ status: "done", data: v, error: null, cached: true });
+          }
+          setCacheChecked(true);
+        })
+        .withFailureHandler(() => { if (!cancelled) setCacheChecked(true); })
+        .getCachedAi(hash, lang);
     } catch (e) { setCacheChecked(true); /* แคชไม่พร้อม — ปล่อยให้ผู้ใช้กดสร้างเอง */ }
     return () => { cancelled = true; };
-  }, [hash, lang, dbReady]);
+  }, [hash, lang]);
 
   // นับถอยหลัง cooldown จาก timestamp จริง (กัน drift และรองรับการรีโหลด)
   useEffect(() => {
@@ -520,22 +520,23 @@ function AIRecommendation({ stats, lang, T, L, fnUrl, initialLoading }) {
     if (cooldown > 0) return;
     setView((s) => ({ ...s, status: "loading", error: null }));
     try {
-      const res = await fetch(fnUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ hash, lang, stats }),
+      // Transport (Apps Script build): server-side getAiRecommendation() proxies Claude.
+      // No HTTP status codes over google.script.run, so rate-limiting is signalled as a
+      // structured { error: "rateLimited", retryAfterSec } object instead of a 429.
+      const data = await new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .getAiRecommendation({ hash, lang, stats });
       });
-      if (res.status === 429) {
-        let wait = AI_COOLDOWN_S;
-        try { const j = await res.json(); wait = Math.max(5, j.retryAfterSec || AI_COOLDOWN_S); } catch (_) { /* ignore */ }
+      if (data && data.error === "rateLimited") {
+        const wait = Math.max(5, data.retryAfterSec || AI_COOLDOWN_S);
         aiSetCooldown(wait);
         setCooldown(wait);
         setView((s) => ({ ...s, status: "error", error: "rateLimited" }));
         return;
       }
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
-      if (!data || !Array.isArray(data.recs) || data.recs.length === 0) throw new Error("bad response");
+      if (!data || data.error || !Array.isArray(data.recs) || data.recs.length === 0) throw new Error("bad response");
       setView({ status: "done", data, error: null, cached: false });
       aiSetCooldown(AI_COOLDOWN_S); // หน่วงเวลา 3 นาทีก่อนกดสร้างซ้ำ
       setCooldown(AI_COOLDOWN_S);
@@ -648,7 +649,8 @@ function CoffeeDashboard() {
   const timer = useRef(null);
   const didMount = useRef(false);
 
-  // ── Toast แจ้งเตือนเรียลไทม์ (ซ้อนได้ มุมขวาบน) ──
+  // ── Toast แจ้งเตือน (ซ้อนได้ มุมขวาบน) ──
+  // เวอร์ชัน Apps Script ไม่มี WS — ใช้การ poll เป็นช่องอัปเดต จึงเด้ง toast เมื่อ poll เจอข้อมูลเปลี่ยนจริง
   const lastData = useRef(null);      // ลายเซ็นข้อมูลก่อนหน้า { sig, count } — ใช้ตรวจว่า "ข้อมูลเปลี่ยนจริง"
   const [toasts, setToasts] = useState([]);
   const toastSeq = useRef(0);
@@ -661,7 +663,7 @@ function CoffeeDashboard() {
   const dismissToast = useCallback((id) => setToasts((list) => list.filter((x) => x.id !== id)), []);
 
   const sync = useCallback(async (opts) => {
-    const notify = !!(opts && opts.notify); // true เฉพาะเมื่อถูกกระตุ้นด้วยสัญญาณเรียลไทม์ (WS)
+    const notify = !!(opts && opts.notify); // true เฉพาะการ poll/สัญญาณอัปเดต (ไม่ใช่การโหลดครั้งแรก)
     setStatus("syncing"); setErrCode(""); setErrRaw(""); setDebugRaw("");
     try {
       const fresh = await fetchLiveData();
@@ -674,7 +676,7 @@ function CoffeeDashboard() {
       setRows(fresh.rows); setIssues(fresh.issues || []); setIssuesHidden(false); setIssuesOpen(false);
       setMeta({ valid: fresh.rows.length, found: fresh.found || 0, maxNo: fresh.maxNo || 0 });
       setSynced(true); setLastSync(new Date()); setStatus("ok");
-      // โผล่ toast เฉพาะเมื่อสัญญาณ WS มา และข้อมูลเปลี่ยนจริงเท่านั้น (poll/ครั้งแรกไม่โผล่)
+      // โผล่ toast เฉพาะเมื่อการ poll เจอข้อมูลเปลี่ยนจริง (การโหลดครั้งแรกไม่โผล่)
       if (notify && changed) pushToast({ delta });
     } catch (e) {
       const m = e.message || String(e);
@@ -723,14 +725,14 @@ function CoffeeDashboard() {
         let first = true;
         ref.on("value", () => {
           if (first) { first = false; return; } // snapshot แรก = ค่าปัจจุบัน ไม่ต้องซิงค์ซ้ำ
-          sync({ notify: true }); // สัญญาณ WS เข้ามา → อนุญาตให้โชว์ toast ถ้าข้อมูลเปลี่ยนจริง
+          sync({ notify: true }); // (สำรอง) ถ้าตั้งค่า Firebase ไว้ — สัญญาณเข้ามาก็เด้ง toast ได้เช่นกัน
         });
         live = true;
       } catch (e) { live = false; }
     }
-    // poll สำรอง: ช้า (60 วิ) เมื่อเรียลไทม์ทำงาน · เร็ว (15 วิ) เมื่อยังไม่ได้ตั้งค่า Firebase
-    // ใช้ () => sync() เพื่อไม่ส่ง notify — การ poll จะไม่เด้ง toast (เฉพาะสัญญาณ WS เท่านั้น)
-    timer.current = setInterval(() => sync(), live ? 60000 : 15000);
+    // รีเฟรชอัตโนมัติทุก POLL_S วินาที (ตั้งใน Config.html ▸ pollSeconds) — เวอร์ชันนี้ polling เสมอ (ไม่มี Firebase push)
+    // ส่ง notify:true เพราะ "การ poll คือช่องอัปเดต" ของเวอร์ชันนี้ → เด้ง toast เมื่อข้อมูลเปลี่ยนจริง
+    timer.current = setInterval(() => sync({ notify: true }), live ? 60000 : POLL_S * 1000);
     return () => {
       if (ref) ref.off();
       if (timer.current) clearInterval(timer.current);
@@ -822,7 +824,7 @@ function CoffeeDashboard() {
   return (
     <div className={"cd-root" + (theme === "light" ? " light" : "")}>
 
-      {/* Toast เรียลไทม์ (มุมขวาบน) — โผล่เมื่อสัญญาณ /signal เข้ามาและข้อมูลเปลี่ยนจริง · ซ้อนได้ · คลิกเพื่อปิด */}
+      {/* Toast แจ้งเตือน (มุมขวาบน) — โผล่เมื่อการ poll เจอข้อมูลเปลี่ยนจริง · ซ้อนได้ · คลิกเพื่อปิด */}
       <div className="cd-toasts" role="status" aria-live="polite">
         {toasts.map((t) => (
           <div key={t.id} className="cd-toast" onClick={() => dismissToast(t.id)}>
@@ -891,7 +893,7 @@ function CoffeeDashboard() {
             {loading ? L.syncingBtn : L.syncNow}
           </button>
           <label className="toggle">
-            <span className="tg-label">{L.autoLabel}</span>
+            <span className="tg-label">{L.autoLabel} ({POLL_S}{L.autoUnit})</span>
             <span className={"tg" + (auto ? " on" : "")} onClick={() => setAuto((v) => !v)} role="switch" aria-checked={auto}>
               <span className="knob" />
             </span>
@@ -1300,3 +1302,5 @@ function Empty({ L }) { return <div className="empty">{L.empty}</div>; }
 
 
 ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(CoffeeDashboard));
+
+</script>

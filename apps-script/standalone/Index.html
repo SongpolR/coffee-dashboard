@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<base target="_top">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+<title>แดชบอร์ดยอดขายร้านกาแฟ</title>
+<style>html,body{margin:0;background:#17120E;}#root{margin:0 auto;}</style>
+<!-- ตั้งสีพื้นหลังหน้าให้ตรงกับธีมที่บันทึกไว้ ก่อน React โหลด เพื่อไม่ให้เห็นพื้นเข้มวูบในธีมสว่าง -->
+<script>try{var t=localStorage.getItem("cd_theme");if(t==="light"){document.documentElement.style.background="#FBF7F1";document.write('<style>html,body{background:#FBF7F1}<\/style>');}}catch(e){}</script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzNCAzNCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjM0Ij4KICA8cmVjdCB4PSIwLjUiIHk9IjAuNSIgd2lkdGg9IjMzIiBoZWlnaHQ9IjMzIiByeD0iOCIgZmlsbD0iIzIxMUExNCIgc3Ryb2tlPSIjM0IyRDIzIi8+CiAgPHBhdGggZD0iTTYgMTNoMTd2N2E4IDggMCAwMS04IDhoLTFhOCA4IDAgMDEtOC04di03eiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRTBBMzNFIiBzdHJva2Utd2lkdGg9IjEuNiIvPgogIDxwYXRoIGQ9Ik0yMyAxNWgzYTMuNSAzLjUgMCAwMTAgN2gtMyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjRTBBMzNFIiBzdHJva2Utd2lkdGg9IjEuNiIvPgogIDxwYXRoIGQ9Ik0xMSA0Yy0xIDEuNS0xIDMgMCA0LjVNMTYgMy41Yy0xIDEuNS0xIDMgMCA0LjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzVCQjg5QSIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K" />
+<!-- CSS (เหมือน styles.css ทุกประการ — ฝังผ่าน HtmlService include) -->
+<?!= include('Styles'); ?>
+<!-- ไลบรารีเดียวกับเวอร์ชัน GitHub Pages ทุกตัว ยกเว้น Firebase (เวอร์ชันนี้ใช้ polling ผ่าน google.script.run) -->
+<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prop-types@15.8.1/prop-types.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.26.4/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<!-- ค่าตั้งค่าฝั่งเบราว์เซอร์ (ไม่ลับ) — ตั้ง window.APP_CONFIG ก่อนแอปรัน -->
+<?!= include('Config'); ?>
+<!-- แอป React (คอมไพล์ผ่าน Babel ในเบราว์เซอร์) — เหมือน app.jsx ต่างเฉพาะชั้นรับส่งข้อมูล -->
+<?!= include('App'); ?>
+</body>
+</html>
