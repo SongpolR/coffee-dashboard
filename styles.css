@@ -245,3 +245,17 @@
   .ai-card,.ai-card::after,.ai-model,.ai-spark,.ai-btn{animation:none;}
 }
 
+/* ── Realtime toast (มุมขวาบน · ซ้อนได้) — โผล่เมื่อสัญญาณ /signal เข้ามาและข้อมูลเปลี่ยนจริง ── */
+.cd-toasts{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:10px;max-width:min(92vw,340px);pointer-events:none;}
+.cd-toast{pointer-events:auto;position:relative;overflow:hidden;display:flex;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--jade);border-radius:10px;padding:11px 13px 13px;box-shadow:0 8px 24px #0000002e;cursor:pointer;animation:cd-toast-in .28s cubic-bezier(.2,.8,.2,1);}
+.cd-toast:hover{border-color:var(--jade);}
+.cd-toast-ic{color:var(--jade);flex:0 0 auto;margin-top:1px;display:flex;}
+.cd-toast-body{min-width:0;}
+.cd-toast-title{color:var(--text);font-weight:600;font-size:13.5px;line-height:1.25;font-family:'IBM Plex Sans Thai',sans-serif;}
+.cd-toast-sub{color:var(--muted);font-size:12px;line-height:1.35;margin-top:2px;font-family:'IBM Plex Sans Thai',sans-serif;}
+@keyframes cd-toast-in{from{opacity:0;transform:translateX(16px);}to{opacity:1;transform:none;}}
+/* แถบนับถอยหลังจนถึงเวลาปิดอัตโนมัติ — ความยาวมาจาก --cd-ttl (= อายุ toast) */
+.cd-toast-bar{position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--jade);opacity:.6;transform-origin:left;animation:cd-toast-bar var(--cd-ttl,5000ms) linear forwards;}
+@keyframes cd-toast-bar{from{transform:scaleX(1);}to{transform:scaleX(0);}}
+@media(prefers-reduced-motion:reduce){.cd-toast{animation:none;}.cd-toast-bar{display:none;}}
+

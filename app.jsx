@@ -42,6 +42,7 @@ const STR = {
     updated: (a) => `อัปเดตล่าสุด ${a}`, idleHint: "กดซิงค์เพื่อดึงข้อมูลสดจากชีต", rowsWord: "แถว",
     err: { parse: "อ่านข้อมูลไม่สำเร็จ — รูปแบบ JSON ไม่ตรง (เปิดดู debug)", net: "เชื่อมต่อ API ไม่ได้ — ตรวจว่า Apps Script deploy เป็น Web app (Anyone) แล้วลองใหม่" },
     syncNow: "ซิงค์เดี๋ยวนี้", syncingBtn: "กำลังซิงค์", autoLabel: "อัปเดตเรียลไทม์",
+    toast: { title: "อัปเดตแดชบอร์ดแล้ว", sub: "ซิงค์ข้อมูลใหม่จากชีตแล้ว", newN: (n) => `+${n} ออร์เดอร์ใหม่` },
     fMenu: "เมนู", fTemp: "อุณหภูมิ", fServe: "รูปแบบ", fPrice: "ราคา",
     all: "ทั้งหมด", hot: "ร้อน", iced: "เย็น", dinein: "ทานที่ร้าน", takeaway: "ซื้อกลับ",
     clear: "ล้างตัวกรอง",
@@ -101,6 +102,7 @@ const STR = {
     updated: (a) => `Updated ${a}`, idleHint: "Press sync to pull live data from the sheet", rowsWord: "rows",
     err: { parse: "Couldn't read the data — unexpected JSON format (see debug)", net: "Can't reach the API — check the Apps Script is deployed as a Web app (Anyone), then retry" },
     syncNow: "Sync now", syncingBtn: "Syncing", autoLabel: "Realtime updates",
+    toast: { title: "Dashboard updated", sub: "Synced new data from the sheet", newN: (n) => `+${n} new order${n === 1 ? "" : "s"}` },
     fMenu: "Menu", fTemp: "Temp", fServe: "Service", fPrice: "Price",
     all: "All", hot: "Hot", iced: "Iced", dinein: "Dine-in", takeaway: "Takeaway",
     clear: "Clear filters",
@@ -652,13 +654,34 @@ function CoffeeDashboard() {
   const timer = useRef(null);
   const didMount = useRef(false);
 
-  const sync = useCallback(async () => {
+  // ── Toast แจ้งเตือนเรียลไทม์ (ซ้อนได้ มุมขวาบน) ──
+  const lastData = useRef(null);      // ลายเซ็นข้อมูลก่อนหน้า { sig, count } — ใช้ตรวจว่า "ข้อมูลเปลี่ยนจริง"
+  const [toasts, setToasts] = useState([]);
+  const toastSeq = useRef(0);
+  const pushToast = useCallback((t) => {
+    const id = ++toastSeq.current;
+    const ttl = t.ttl || 5000; // อายุ toast (มิลลิวินาที) — ใช้ทั้งตั้งเวลาปิดและความยาวแถบนับถอยหลัง
+    setToasts((list) => [{ id, ...t, ttl }, ...list].slice(0, 4)); // ใหม่สุดอยู่บน · เก็บไว้สูงสุด 4 ใบ
+    setTimeout(() => setToasts((list) => list.filter((x) => x.id !== id)), ttl);
+  }, []);
+  const dismissToast = useCallback((id) => setToasts((list) => list.filter((x) => x.id !== id)), []);
+
+  const sync = useCallback(async (opts) => {
+    const notify = !!(opts && opts.notify); // true เฉพาะเมื่อถูกกระตุ้นด้วยสัญญาณเรียลไทม์ (WS)
     setStatus("syncing"); setErrCode(""); setErrRaw(""); setDebugRaw("");
     try {
       const fresh = await fetchLiveData();
+      // ตรวจว่าข้อมูลเปลี่ยนจริงไหม โดยแฮชแถวที่ถูกต้องแล้วเทียบกับครั้งก่อน
+      const sig = hashStr(JSON.stringify(fresh.rows));
+      const prev = lastData.current;
+      const changed = prev !== null && sig !== prev.sig;
+      const delta = prev ? fresh.rows.length - prev.count : 0;
+      lastData.current = { sig, count: fresh.rows.length };
       setRows(fresh.rows); setIssues(fresh.issues || []); setIssuesHidden(false); setIssuesOpen(false);
       setMeta({ valid: fresh.rows.length, found: fresh.found || 0, maxNo: fresh.maxNo || 0 });
       setSynced(true); setLastSync(new Date()); setStatus("ok");
+      // โผล่ toast เฉพาะเมื่อสัญญาณ WS มา และข้อมูลเปลี่ยนจริงเท่านั้น (poll/ครั้งแรกไม่โผล่)
+      if (notify && changed) pushToast({ delta });
     } catch (e) {
       const m = e.message || String(e);
       if (m === "PARSE_FAIL") setErrCode("parse");
@@ -667,7 +690,7 @@ function CoffeeDashboard() {
       if (e.sample) { setDebugRaw(e.sample); setShowDebug(true); }
       setStatus("error");
     }
-  }, []);
+  }, [pushToast]);
 
   const copyDebug = useCallback(() => {
     const text = debugRaw || "";
@@ -706,13 +729,14 @@ function CoffeeDashboard() {
         let first = true;
         ref.on("value", () => {
           if (first) { first = false; return; } // snapshot แรก = ค่าปัจจุบัน ไม่ต้องซิงค์ซ้ำ
-          sync();
+          sync({ notify: true }); // สัญญาณ WS เข้ามา → อนุญาตให้โชว์ toast ถ้าข้อมูลเปลี่ยนจริง
         });
         live = true;
       } catch (e) { live = false; }
     }
     // poll สำรอง: ช้า (60 วิ) เมื่อเรียลไทม์ทำงาน · เร็ว (15 วิ) เมื่อยังไม่ได้ตั้งค่า Firebase
-    timer.current = setInterval(sync, live ? 60000 : 15000);
+    // ใช้ () => sync() เพื่อไม่ส่ง notify — การ poll จะไม่เด้ง toast (เฉพาะสัญญาณ WS เท่านั้น)
+    timer.current = setInterval(() => sync(), live ? 60000 : 15000);
     return () => {
       if (ref) ref.off();
       if (timer.current) clearInterval(timer.current);
@@ -803,6 +827,24 @@ function CoffeeDashboard() {
 
   return (
     <div className={"cd-root" + (theme === "light" ? " light" : "")}>
+
+      {/* Toast เรียลไทม์ (มุมขวาบน) — โผล่เมื่อสัญญาณ /signal เข้ามาและข้อมูลเปลี่ยนจริง · ซ้อนได้ · คลิกเพื่อปิด */}
+      <div className="cd-toasts" role="status" aria-live="polite">
+        {toasts.map((t) => (
+          <div key={t.id} className="cd-toast" onClick={() => dismissToast(t.id)}>
+            <span className="cd-toast-ic" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M21 12a9 9 0 11-3-6.7M21 3v5h-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
+            <div className="cd-toast-body">
+              <div className="cd-toast-title">{L.toast.title}</div>
+              <div className="cd-toast-sub">{L.toast.sub}{t.delta > 0 ? " · " + L.toast.newN(t.delta) : ""}</div>
+            </div>
+            <span className="cd-toast-bar" style={{ "--cd-ttl": t.ttl + "ms" }} aria-hidden="true" />
+          </div>
+        ))}
+      </div>
 
       <header className="cd-head">
         <div className="cd-mark">
