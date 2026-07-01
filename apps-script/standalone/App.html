@@ -342,25 +342,19 @@ function describeStats(values) {
   };
 }
 
-// ปัดความกว้างช่วงให้เป็นเลขกลม ๆ (1, 2, 2.5, 5, 10 × 10^n) — แบบเดียวกับการเลือกสเกลแกนกราฟ
-function niceBinWidth(raw) {
-  if (!(raw > 0)) return 1;
-  const pow = Math.pow(10, Math.floor(Math.log10(raw)));
-  const frac = raw / pow;
-  const nice = frac <= 1 ? 1 : frac <= 2 ? 2 : frac <= 2.5 ? 2.5 : frac <= 5 ? 5 : 10;
-  return nice * pow;
-}
+// ความกว้างถังฮิสโทแกรมแบบ "คงที่" (บาท) — ตรึงไว้เพื่อไม่ให้ช่วงแกน X (ป้ายถัง) เปลี่ยนเวลาข้อมูลอัปเดต
+// เปลี่ยนเป็น 100 ได้ถ้าอยากได้แท่งน้อยลงเมื่อยอดใช้จ่ายต่อลูกค้ากระจายกว้าง
+const HIST_BIN = 50;
 
-// จัดกลุ่มเป็นช่วงเท่า ๆ กันสำหรับฮิสโทแกรม โดยใช้ขอบช่วงเป็นเลขกลม (เช่น 50–100, 100–150)
+// จัดกลุ่มเป็นช่วงกว้างคงที่ (= HIST_BIN) ขอบช่วงลงตัวกับ HIST_BIN เสมอ (เช่น 50–100, 100–150)
+// ใช้ความกว้างคงที่แทนการปรับตามข้อมูล → ถังเดิมอยู่ตำแหน่งเดิมทุกครั้งที่ข้อมูลเปลี่ยน (ไม่สับสน)
 function makeHistogram(values) {
   const n = values.length;
   if (!n) return [];
+  const width = HIST_BIN;
   const min = Math.min(...values), max = Math.max(...values);
-  if (min === max) return [{ label: String(Math.round(min)), count: n }];
-  const targetK = Math.min(16, Math.max(6, Math.ceil(Math.sqrt(n))));
-  const width = niceBinWidth((max - min) / targetK);
-  const start = Math.floor(min / width) * width;          // ขอบล่างปัดลงให้ลงตัวกับความกว้าง
-  const end = Math.ceil(max / width) * width;              // ขอบบนปัดขึ้นให้ครอบค่าสูงสุด
+  const start = Math.floor(min / width) * width;                        // ขอบล่างปัดลงให้ลงตัวกับความกว้าง
+  const end = Math.max(start + width, Math.ceil(max / width) * width);  // ครอบค่าสูงสุด (อย่างน้อยหนึ่งถัง)
   const k = Math.max(1, Math.round((end - start) / width));
   const bins = Array.from({ length: k }, (_, i) => ({ lo: start + i * width, hi: start + (i + 1) * width, count: 0 }));
   for (const x of values) { let i = Math.floor((x - start) / width); if (i >= k) i = k - 1; if (i < 0) i = 0; bins[i].count++; }
